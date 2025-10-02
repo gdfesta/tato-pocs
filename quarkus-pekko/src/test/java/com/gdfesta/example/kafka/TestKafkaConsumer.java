@@ -2,10 +2,9 @@ package com.gdfesta.example.kafka;
 
 import com.gdfesta.example.kafka.producer.model.GreetingKafkaMessage;
 import jakarta.enterprise.context.ApplicationScoped;
-import org.eclipse.microprofile.reactive.messaging.Incoming;
-
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
+import org.eclipse.microprofile.reactive.messaging.Incoming;
 
 /**
  * Test Kafka consumer that captures messages for verification.
@@ -13,6 +12,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
  */
 @ApplicationScoped
 public class TestKafkaConsumer {
+
     private static final List<GreetingKafkaMessage> capturedMessages = new CopyOnWriteArrayList<>();
 
     @Incoming("greeting-events-test")

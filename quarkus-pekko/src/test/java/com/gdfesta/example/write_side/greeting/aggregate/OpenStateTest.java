@@ -1,11 +1,10 @@
 package com.gdfesta.example.write_side.greeting.aggregate;
 
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Test;
+import static org.junit.jupiter.api.Assertions.*;
 
 import java.util.List;
-
-import static org.junit.jupiter.api.Assertions.*;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
 
 @DisplayName("OpenState Tests")
 class OpenStateTest {
@@ -28,8 +27,8 @@ class OpenStateTest {
         List<GreetingEvent> events = state.onCommand(command);
 
         assertEquals(1, events.size());
-        assertInstanceOf(GreetingEvent.Greeted.class, events.get(0));
-        assertEquals("John", ((GreetingEvent.Greeted) events.get(0)).name());
+        assertInstanceOf(GreetingEvent.Greeted.class, events.getFirst());
+        assertEquals("John", ((GreetingEvent.Greeted) events.getFirst()).name());
     }
 
     @Test
@@ -41,7 +40,7 @@ class OpenStateTest {
         List<GreetingEvent> events = state.onCommand(command);
 
         assertEquals(1, events.size());
-        assertInstanceOf(GreetingEvent.UnGreeted.class, events.get(0));
+        assertInstanceOf(GreetingEvent.UnGreeted.class, events.getFirst());
     }
 
     @Test

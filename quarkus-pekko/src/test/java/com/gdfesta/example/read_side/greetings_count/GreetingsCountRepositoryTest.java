@@ -1,17 +1,16 @@
 package com.gdfesta.example.read_side.greetings_count;
 
+import static org.junit.jupiter.api.Assertions.*;
+
 import io.quarkus.test.junit.QuarkusTest;
 import jakarta.inject.Inject;
 import jakarta.persistence.EntityManager;
 import jakarta.transaction.Transactional;
+import java.time.Instant;
+import java.util.UUID;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-
-import java.time.Instant;
-import java.util.UUID;
-
-import static org.junit.jupiter.api.Assertions.*;
 
 @QuarkusTest
 @DisplayName("GreetingsCountRepository Integration Tests")
@@ -24,13 +23,13 @@ class GreetingsCountRepositoryTest {
     EntityManager entityManager;
 
     private String generateUniqueName() {
-        return "test-" + UUID.randomUUID().toString();
+        return "test-" + UUID.randomUUID();
     }
 
     /**
      * Clears the JPA first-level cache (persistence context).
      * This forces subsequent findById() calls to fetch fresh data from the database.
-     *
+     * <p>
      * Why needed: In tests, the persistence context spans the entire test method,
      * so without clearing, findById() returns cached entities instead of
      * querying the database to verify actual persistence.
@@ -106,8 +105,10 @@ class GreetingsCountRepositoryTest {
         GreetingsCountModel second = repository.findById(name);
         Instant secondTimestamp = second.lastGreetedAt;
         assertNotNull(secondTimestamp);
-        assertTrue(secondTimestamp.isAfter(firstTimestamp),
-            "Second timestamp should be after first timestamp");
+        assertTrue(
+            secondTimestamp.isAfter(firstTimestamp),
+            "Second timestamp should be after first timestamp"
+        );
 
         // Wait a bit more
         Thread.sleep(10);
@@ -118,8 +119,10 @@ class GreetingsCountRepositoryTest {
         GreetingsCountModel third = repository.findById(name);
         Instant thirdTimestamp = third.lastGreetedAt;
         assertNotNull(thirdTimestamp);
-        assertTrue(thirdTimestamp.isAfter(secondTimestamp),
-            "Third timestamp should be after second timestamp");
+        assertTrue(
+            thirdTimestamp.isAfter(secondTimestamp),
+            "Third timestamp should be after second timestamp"
+        );
     }
 
     @Test

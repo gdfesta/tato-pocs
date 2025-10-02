@@ -1,8 +1,11 @@
 package com.gdfesta.example.write_side.greeting.aggregate;
 
+import java.util.Collections;
+import java.util.List;
+import java.util.Set;
 import org.apache.pekko.actor.typed.Behavior;
-import org.apache.pekko.cluster.sharding.typed.javadsl.EntityTypeKey;
 import org.apache.pekko.cluster.sharding.typed.javadsl.EntityContext;
+import org.apache.pekko.cluster.sharding.typed.javadsl.EntityTypeKey;
 import org.apache.pekko.pattern.StatusReply;
 import org.apache.pekko.persistence.typed.PersistenceId;
 import org.apache.pekko.persistence.typed.javadsl.CommandHandler;
@@ -10,21 +13,26 @@ import org.apache.pekko.persistence.typed.javadsl.EventHandler;
 import org.apache.pekko.persistence.typed.javadsl.EventSourcedBehavior;
 import org.apache.pekko.persistence.typed.javadsl.RetentionCriteria;
 
-import java.util.Collections;
-import java.util.List;
-import java.util.Set;
-
 public class GreetingActorBehavior
-        extends EventSourcedBehavior<GreetingCommand, GreetingEvent, GreetingState> {
+    extends EventSourcedBehavior<GreetingCommand, GreetingEvent, GreetingState> {
 
-    public static final EntityTypeKey<GreetingCommand> ENTITY_TYPE_KEY = EntityTypeKey.create(GreetingCommand.class,
-            "greeting-aggregate");
+    public static final EntityTypeKey<GreetingCommand> ENTITY_TYPE_KEY = EntityTypeKey.create(
+        GreetingCommand.class,
+        "greeting-aggregate"
+    );
 
-    public static final List<String> tags = List.of("greeting-0", "greeting-1", "greeting-2", "greeting-3", "greeting-4");
+    public static final List<String> tags = List.of(
+        "greeting-0",
+        "greeting-1",
+        "greeting-2",
+        "greeting-3",
+        "greeting-4"
+    );
 
     public static Behavior<GreetingCommand> create(EntityContext<GreetingCommand> entityContext) {
         return new GreetingActorBehavior(
-                PersistenceId.of(entityContext.getEntityTypeKey().name(), entityContext.getEntityId()));
+            PersistenceId.of(entityContext.getEntityTypeKey().name(), entityContext.getEntityId())
+        );
     }
 
     private GreetingActorBehavior(PersistenceId persistenceId) {
@@ -39,28 +47,30 @@ public class GreetingActorBehavior
     @Override
     public CommandHandler<GreetingCommand, GreetingEvent, GreetingState> commandHandler() {
         return newCommandHandlerBuilder()
-                .forAnyState()
-                .onCommand(GreetingCommand.Get.class, (state, command) -> Effect().reply(command.replyTo(), state))
-                .onCommand(GreetingCommand.NonGet.class,
-                        (state, command) -> {
-                            try {
-                                var events = state.onCommand(command);
+            .forAnyState()
+            .onCommand(
+                GreetingCommand.Get.class,
+                (state, command) -> Effect().reply(command.replyTo(), state)
+            )
+            .onCommand(GreetingCommand.NonGet.class, (state, command) -> {
+                try {
+                    var events = state.onCommand(command);
 
-                                var effect = events.isEmpty() ? Effect().none() : Effect().persist(events);
+                    var effect = events.isEmpty() ? Effect().none() : Effect().persist(events);
 
-                                return effect.thenRun(newState -> command.replyTo().tell(StatusReply.success(newState)));
-                            } catch (IllegalStateException e) {
-                                return Effect().reply(command.replyTo(), StatusReply.error(e));
-                            }
-                        })
-                .build();
+                    return effect.thenRun(
+                        newState -> command.replyTo().tell(StatusReply.success(newState))
+                    );
+                } catch (IllegalStateException e) {
+                    return Effect().reply(command.replyTo(), StatusReply.error(e));
+                }
+            })
+            .build();
     }
 
     @Override
     public EventHandler<GreetingState, GreetingEvent> eventHandler() {
-        return newEventHandlerBuilder()
-                .forAnyState()
-                .onAnyEvent(GreetingState::onEvent);
+        return newEventHandlerBuilder().forAnyState().onAnyEvent(GreetingState::onEvent);
     }
 
     @Override

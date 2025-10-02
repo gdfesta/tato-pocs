@@ -1,17 +1,14 @@
 package com.gdfesta.example.write_side.greeting.services;
 
-import java.time.Duration;
-
-import org.apache.pekko.cluster.sharding.typed.javadsl.ClusterSharding;
-import org.apache.pekko.pattern.StatusReply;
-
 import com.gdfesta.example.write_side.greeting.aggregate.GreetingActorBehavior;
 import com.gdfesta.example.write_side.greeting.aggregate.GreetingCommand;
 import com.gdfesta.example.write_side.greeting.aggregate.GreetingState;
-
 import io.smallrye.mutiny.Uni;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
+import java.time.Duration;
+import org.apache.pekko.cluster.sharding.typed.javadsl.ClusterSharding;
+import org.apache.pekko.pattern.StatusReply;
 
 @ApplicationScoped
 public class GreetingService {
@@ -21,17 +18,27 @@ public class GreetingService {
 
     public Uni<GreetingState> get(String name) {
         var entityRef = sharding.entityRefFor(GreetingActorBehavior.ENTITY_TYPE_KEY, name);
-        return Uni.createFrom().completionStage(entityRef.ask(GreetingCommand.Get::new, Duration.ofSeconds(5)));
+        return Uni.createFrom()
+            .completionStage(entityRef.ask(GreetingCommand.Get::new, Duration.ofSeconds(5)));
     }
 
     public Uni<GreetingState> greet(String name) {
         var entityRef = sharding.entityRefFor(GreetingActorBehavior.ENTITY_TYPE_KEY, name);
-        return Uni.createFrom().completionStage(entityRef.<StatusReply<GreetingState>>ask(replyTo -> new GreetingCommand.Greet(name, replyTo), Duration.ofSeconds(5))).flatMap(this::toUni);
+        return Uni.createFrom()
+            .completionStage(
+                entityRef.<StatusReply<GreetingState>>ask(
+                    replyTo -> new GreetingCommand.Greet(name, replyTo),
+                    Duration.ofSeconds(5)
+                )
+            )
+            .flatMap(this::toUni);
     }
 
     public Uni<GreetingState> ungreet(String name) {
         var entityRef = sharding.entityRefFor(GreetingActorBehavior.ENTITY_TYPE_KEY, name);
-        return Uni.createFrom().completionStage(entityRef.ask(GreetingCommand.UnGreet::new, Duration.ofSeconds(5))).flatMap(this::toUni);
+        return Uni.createFrom()
+            .completionStage(entityRef.ask(GreetingCommand.UnGreet::new, Duration.ofSeconds(5)))
+            .flatMap(this::toUni);
     }
 
     private Uni<GreetingState> toUni(StatusReply<GreetingState> statusReply) {
@@ -42,5 +49,4 @@ public class GreetingService {
             return Uni.createFrom().failure(statusReply.getError());
         }
     }
-
 }

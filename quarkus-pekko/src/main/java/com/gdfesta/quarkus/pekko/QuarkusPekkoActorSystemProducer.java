@@ -4,12 +4,10 @@ import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
 import io.quarkus.runtime.ShutdownEvent;
 import io.quarkus.runtime.StartupEvent;
+import jakarta.annotation.Priority;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.enterprise.event.Observes;
 import jakarta.enterprise.inject.Produces;
-import org.eclipse.microprofile.config.inject.ConfigProperty;
-
-
 import org.apache.pekko.actor.typed.ActorSystem;
 import org.apache.pekko.actor.typed.javadsl.Behaviors;
 import org.apache.pekko.cluster.sharding.typed.javadsl.ClusterSharding;
@@ -17,16 +15,18 @@ import org.apache.pekko.cluster.typed.Cluster;
 import org.apache.pekko.cluster.typed.Join;
 import org.apache.pekko.management.cluster.bootstrap.ClusterBootstrap;
 import org.apache.pekko.management.javadsl.PekkoManagement;
+import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.jboss.logging.Logger;
-import jakarta.annotation.Priority;
-
 
 @ApplicationScoped
 public class QuarkusPekkoActorSystemProducer {
 
     private static final Logger LOG = Logger.getLogger(QuarkusPekkoActorSystemProducer.class);
 
-    @ConfigProperty(name = "quarkus.datasource.jdbc.url", defaultValue = "jdbc:postgresql://localhost:5432/quarkus")
+    @ConfigProperty(
+        name = "quarkus.datasource.jdbc.url",
+        defaultValue = "jdbc:postgresql://localhost:5432/quarkus"
+    )
     String datasourceUrl;
 
     @ConfigProperty(name = "quarkus.datasource.username", defaultValue = "quarkus")
@@ -46,17 +46,17 @@ public class QuarkusPekkoActorSystemProducer {
         setSystemPropertyIfAbsent("QUARKUS_DATASOURCE_USERNAME", datasourceUsername);
         setSystemPropertyIfAbsent("QUARKUS_DATASOURCE_PASSWORD", datasourcePassword);
 
-        LOG.infof("Configured Pekko with Quarkus datasource: %s (user: %s)", datasourceUrl, datasourceUsername);
+        LOG.infof(
+            "Configured Pekko with Quarkus datasource: %s (user: %s)",
+            datasourceUrl,
+            datasourceUsername
+        );
 
         // Load Pekko configuration
         Config config = ConfigFactory.load();
 
         // Create the ActorSystem
-        actorSystem = ActorSystem.create(
-            Behaviors.empty(),
-            "quarkus-pekko",
-            config
-        );
+        actorSystem = ActorSystem.create(Behaviors.empty(), "quarkus-pekko", config);
 
         // Determine if we're running in Kubernetes or local
         boolean isKubernetes = System.getenv("KUBERNETES_SERVICE_HOST") != null;

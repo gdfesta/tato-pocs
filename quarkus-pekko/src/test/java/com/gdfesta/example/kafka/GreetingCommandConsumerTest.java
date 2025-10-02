@@ -1,17 +1,16 @@
 package com.gdfesta.example.kafka;
 
-import com.gdfesta.example.kafka.consumer.model.GreetingCommandMessage;
-import io.quarkus.test.junit.QuarkusTest;
-import jakarta.inject.Inject;
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Test;
-
-import java.util.UUID;
-import java.util.concurrent.TimeUnit;
-
 import static io.restassured.RestAssured.given;
 import static org.awaitility.Awaitility.await;
 import static org.hamcrest.CoreMatchers.is;
+
+import com.gdfesta.example.kafka.consumer.model.GreetingCommandMessage;
+import io.quarkus.test.junit.QuarkusTest;
+import jakarta.inject.Inject;
+import java.util.UUID;
+import java.util.concurrent.TimeUnit;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
 
 @QuarkusTest
 @DisplayName("GreetingCommandConsumer Integration Tests")
@@ -21,7 +20,7 @@ class GreetingCommandConsumerTest {
     TestCommandProducer commandProducer;
 
     private String generateUniqueName() {
-        return "cmd-test-" + UUID.randomUUID().toString();
+        return "cmd-test-" + UUID.randomUUID();
     }
 
     @Test
@@ -37,14 +36,16 @@ class GreetingCommandConsumerTest {
         await()
             .atMost(10, TimeUnit.SECONDS)
             .pollInterval(200, TimeUnit.MILLISECONDS)
-            .untilAsserted(() -> {
-                given()
-                    .when().get("/greetings/{name}", name)
-                    .then()
+            .untilAsserted(
+                () ->
+                    given()
+                        .when()
+                        .get("/greetings/{name}", name)
+                        .then()
                         .statusCode(200)
                         .body("status", is("OpenState"))
-                        .body("count", is(1));
-            });
+                        .body("count", is(1))
+            );
     }
 
     @Test
@@ -62,14 +63,16 @@ class GreetingCommandConsumerTest {
         await()
             .atMost(10, TimeUnit.SECONDS)
             .pollInterval(200, TimeUnit.MILLISECONDS)
-            .untilAsserted(() -> {
-                given()
-                    .when().get("/greetings/{name}", name)
-                    .then()
+            .untilAsserted(
+                () ->
+                    given()
+                        .when()
+                        .get("/greetings/{name}", name)
+                        .then()
                         .statusCode(200)
                         .body("status", is("OpenState"))
-                        .body("count", is(3));
-            });
+                        .body("count", is(3))
+            );
     }
 
     @Test
@@ -85,13 +88,15 @@ class GreetingCommandConsumerTest {
         await()
             .atMost(10, TimeUnit.SECONDS)
             .pollInterval(200, TimeUnit.MILLISECONDS)
-            .untilAsserted(() -> {
-                given()
-                    .when().get("/greetings/{name}", name)
-                    .then()
+            .untilAsserted(
+                () ->
+                    given()
+                        .when()
+                        .get("/greetings/{name}", name)
+                        .then()
                         .statusCode(200)
-                        .body("count", is(1));
-            });
+                        .body("count", is(1))
+            );
 
         // Now send UnGreetCommand
         var unGreetCommand = new GreetingCommandMessage.UnGreetCommand(name);
@@ -101,14 +106,16 @@ class GreetingCommandConsumerTest {
         await()
             .atMost(10, TimeUnit.SECONDS)
             .pollInterval(200, TimeUnit.MILLISECONDS)
-            .untilAsserted(() -> {
-                given()
-                    .when().get("/greetings/{name}", name)
-                    .then()
+            .untilAsserted(
+                () ->
+                    given()
+                        .when()
+                        .get("/greetings/{name}", name)
+                        .then()
                         .statusCode(200)
                         .body("status", is("OpenState"))
-                        .body("count", is(0));
-            });
+                        .body("count", is(0))
+            );
     }
 
     @Test
@@ -126,14 +133,16 @@ class GreetingCommandConsumerTest {
         await()
             .atMost(15, TimeUnit.SECONDS)
             .pollInterval(200, TimeUnit.MILLISECONDS)
-            .untilAsserted(() -> {
-                given()
-                    .when().get("/greetings/{name}", name)
-                    .then()
+            .untilAsserted(
+                () ->
+                    given()
+                        .when()
+                        .get("/greetings/{name}", name)
+                        .then()
                         .statusCode(200)
                         .body("status", is("CloseState"))
-                        .body("count", is(5));
-            });
+                        .body("count", is(5))
+            );
     }
 
     @Test
@@ -151,25 +160,29 @@ class GreetingCommandConsumerTest {
         await()
             .atMost(10, TimeUnit.SECONDS)
             .pollInterval(200, TimeUnit.MILLISECONDS)
-            .untilAsserted(() -> {
-                given()
-                    .when().get("/greetings/{name}", alice)
-                    .then()
+            .untilAsserted(
+                () ->
+                    given()
+                        .when()
+                        .get("/greetings/{name}", alice)
+                        .then()
                         .statusCode(200)
-                        .body("count", is(2));
-            });
+                        .body("count", is(2))
+            );
 
         // Verify Bob has count 1
         await()
             .atMost(10, TimeUnit.SECONDS)
             .pollInterval(200, TimeUnit.MILLISECONDS)
-            .untilAsserted(() -> {
-                given()
-                    .when().get("/greetings/{name}", bob)
-                    .then()
+            .untilAsserted(
+                () ->
+                    given()
+                        .when()
+                        .get("/greetings/{name}", bob)
+                        .then()
                         .statusCode(200)
-                        .body("count", is(1));
-            });
+                        .body("count", is(1))
+            );
     }
 
     @Test
@@ -187,12 +200,14 @@ class GreetingCommandConsumerTest {
         await()
             .atMost(10, TimeUnit.SECONDS)
             .pollInterval(200, TimeUnit.MILLISECONDS)
-            .untilAsserted(() -> {
-                given()
-                    .when().get("/greetings/{name}", name)
-                    .then()
+            .untilAsserted(
+                () ->
+                    given()
+                        .when()
+                        .get("/greetings/{name}", name)
+                        .then()
                         .statusCode(200)
-                        .body("count", is(2));
-            });
+                        .body("count", is(2))
+            );
     }
 }

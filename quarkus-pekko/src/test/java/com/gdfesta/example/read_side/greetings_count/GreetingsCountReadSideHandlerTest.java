@@ -1,18 +1,17 @@
 package com.gdfesta.example.read_side.greetings_count;
 
-import io.quarkus.test.junit.QuarkusTest;
-import jakarta.inject.Inject;
-import jakarta.transaction.Transactional;
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Test;
-
-import java.util.UUID;
-import java.util.concurrent.TimeUnit;
-
 import static io.restassured.RestAssured.given;
 import static org.awaitility.Awaitility.await;
 import static org.hamcrest.CoreMatchers.is;
 import static org.junit.jupiter.api.Assertions.*;
+
+import io.quarkus.test.junit.QuarkusTest;
+import jakarta.inject.Inject;
+import jakarta.transaction.Transactional;
+import java.util.UUID;
+import java.util.concurrent.TimeUnit;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
 
 @QuarkusTest
 @DisplayName("GreetingsCountReadSideHandler Integration Tests")
@@ -22,7 +21,7 @@ class GreetingsCountReadSideHandlerTest {
     GreetingsCountRepository repository;
 
     private String generateUniqueName() {
-        return "handler-test-" + UUID.randomUUID().toString();
+        return "handler-test-" + UUID.randomUUID();
     }
 
     @Transactional
@@ -37,11 +36,12 @@ class GreetingsCountReadSideHandlerTest {
 
         // POST greeting via REST API (triggers actor + event + projection)
         given()
-            .when().post("/greetings/{name}", name)
+            .when()
+            .post("/greetings/{name}", name)
             .then()
-                .statusCode(200)
-                .body("status", is("OpenState"))
-                .body("count", is(1));
+            .statusCode(200)
+            .body("status", is("OpenState"))
+            .body("count", is(1));
 
         // Wait for async projection to process and update read-side database
         await()
@@ -68,10 +68,7 @@ class GreetingsCountReadSideHandlerTest {
 
         // POST 3 greetings
         for (int i = 0; i < 3; i++) {
-            given()
-                .when().post("/greetings/{name}", name)
-                .then()
-                    .statusCode(200);
+            given().when().post("/greetings/{name}", name).then().statusCode(200);
         }
 
         // Wait for projection to process all 3 events
@@ -94,9 +91,7 @@ class GreetingsCountReadSideHandlerTest {
         given().when().post("/greetings/{name}", name).then().statusCode(200);
 
         // Wait for first projection
-        await()
-            .atMost(10, TimeUnit.SECONDS)
-            .until(() -> findById(name) != null);
+        await().atMost(10, TimeUnit.SECONDS).until(() -> findById(name) != null);
 
         GreetingsCountModel first = findById(name);
         assertNotNull(first.lastGreetedAt);
@@ -114,8 +109,10 @@ class GreetingsCountReadSideHandlerTest {
             .untilAsserted(() -> {
                 GreetingsCountModel model = findById(name);
                 assertEquals(2, model.greetingCount);
-                assertTrue(model.lastGreetedAt.isAfter(first.lastGreetedAt),
-                    "Timestamp should be updated after second greeting");
+                assertTrue(
+                    model.lastGreetedAt.isAfter(first.lastGreetedAt),
+                    "Timestamp should be updated after second greeting"
+                );
             });
     }
 
@@ -141,10 +138,7 @@ class GreetingsCountReadSideHandlerTest {
         assertEquals(3, before.greetingCount);
 
         // DELETE (UnGreet) - should not affect read-side database
-        given()
-            .when().delete("/greetings/{name}", name)
-            .then()
-                .statusCode(200);
+        given().when().delete("/greetings/{name}", name).then().statusCode(200);
 
         // Wait a bit for any potential projection processing
         try {
@@ -156,7 +150,11 @@ class GreetingsCountReadSideHandlerTest {
         // Database should still have count=3 (UnGreeted event is ignored by read-side handler)
         GreetingsCountModel after = findById(name);
         assertNotNull(after);
-        assertEquals(3, after.greetingCount, "UnGreeted event should not decrement read-side count");
+        assertEquals(
+            3,
+            after.greetingCount,
+            "UnGreeted event should not decrement read-side count"
+        );
     }
 
     @Test
@@ -214,8 +212,11 @@ class GreetingsCountReadSideHandlerTest {
             .untilAsserted(() -> {
                 GreetingsCountModel model = findById(name);
                 assertNotNull(model, "Read model should exist");
-                assertEquals(totalGreetings, model.greetingCount,
-                    "All greetings should be counted even when sent rapidly");
+                assertEquals(
+                    totalGreetings,
+                    model.greetingCount,
+                    "All greetings should be counted even when sent rapidly"
+                );
             });
     }
 }

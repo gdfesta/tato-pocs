@@ -1,18 +1,14 @@
 package com.gdfesta.example;
 
+import com.gdfesta.example.write_side.greeting.aggregate.GreetingActorBehavior;
 import io.quarkus.runtime.StartupEvent;
+import jakarta.annotation.Priority;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.enterprise.event.Observes;
 import jakarta.inject.Inject;
-
 import org.apache.pekko.cluster.sharding.typed.javadsl.ClusterSharding;
 import org.apache.pekko.cluster.sharding.typed.javadsl.Entity;
 import org.jboss.logging.Logger;
-
-import com.gdfesta.example.write_side.greeting.aggregate.GreetingActorBehavior;
-
-import jakarta.annotation.Priority;
-
 
 @ApplicationScoped
 public class ShardsCreator {
@@ -26,9 +22,8 @@ public class ShardsCreator {
         LOG.info("Initializing Shards...");
 
         // Initialize the sharding for GreetingActor
-        sharding.init(Entity.of(
-                GreetingActorBehavior.ENTITY_TYPE_KEY,
-                GreetingActorBehavior::create
-        ));
+        sharding.init(
+            Entity.of(GreetingActorBehavior.ENTITY_TYPE_KEY, GreetingActorBehavior::create)
+        );
     }
 }

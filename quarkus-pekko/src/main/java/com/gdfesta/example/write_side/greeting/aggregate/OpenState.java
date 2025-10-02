@@ -21,13 +21,12 @@ public record OpenState(int count, int maxCount) implements GreetingState {
 
     private GreetingState incremented() {
         return (count + 1 == maxCount)
-                ? new CloseState(count + 1)
-                : new OpenState(count + 1, maxCount);
+            ? new CloseState(count + 1)
+            : new OpenState(count + 1, maxCount);
     }
 
     private GreetingState decremented() {
         int newCount = Math.max(count - 1, 0);
         return new OpenState(newCount, maxCount);
     }
-
 }
