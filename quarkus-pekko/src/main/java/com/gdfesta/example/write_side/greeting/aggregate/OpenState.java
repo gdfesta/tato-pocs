@@ -7,31 +7,26 @@ public record OpenState(int count, int maxCount) implements GreetingState {
     public List<GreetingEvent> onCommand(GreetingCommand.NonGet command) {
         return switch (command) {
             case GreetingCommand.Greet greet -> List.of(new GreetingEvent.Greeted(greet.name()));
-            case GreetingCommand.UnGreet unGreet -> List.of(new GreetingEvent.UnGreeted());
+            case GreetingCommand.UnGreet ignored -> List.of(new GreetingEvent.UnGreeted());
         };
     }
 
     @Override
     public GreetingState onEvent(GreetingEvent event) {
         return switch (event) {
-            case GreetingEvent.Greeted e -> incremented();
-            case GreetingEvent.UnGreeted e -> decremented();
+            case GreetingEvent.Greeted ignored -> incremented();
+            case GreetingEvent.UnGreeted ignored -> decremented();
         };
     }
 
     private GreetingState incremented() {
-        int newCount = count + 1;
-        if (newCount == maxCount) {
-            return new CloseState(newCount);
-        }
-        return new OpenState(newCount, maxCount);
+        return (count + 1 == maxCount)
+                ? new CloseState(count + 1)
+                : new OpenState(count + 1, maxCount);
     }
 
     private GreetingState decremented() {
-        int newCount = count - 1;
-        if (newCount < 0) {
-            newCount = 0;
-        }
+        int newCount = Math.max(count - 1, 0);
         return new OpenState(newCount, maxCount);
     }
 

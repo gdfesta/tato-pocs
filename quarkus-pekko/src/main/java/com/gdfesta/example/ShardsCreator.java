@@ -15,20 +15,20 @@ import jakarta.annotation.Priority;
 
 
 @ApplicationScoped
-public class ShardingsCreator {
+public class ShardsCreator {
 
-    private static final Logger LOG = Logger.getLogger(ShardingsCreator.class);
-    
+    private static final Logger LOG = Logger.getLogger(ShardsCreator.class);
+
     @Inject
     ClusterSharding sharding;
-    
+
     void onStart(@Observes @Priority(1002) StartupEvent event) {
-        LOG.info("Initializing Shardings...");
+        LOG.info("Initializing Shards...");
 
         // Initialize the sharding for GreetingActor
         sharding.init(Entity.of(
-            GreetingActorBehavior.ENTITY_TYPE_KEY,
-            entityContext -> GreetingActorBehavior.create(entityContext)
+                GreetingActorBehavior.ENTITY_TYPE_KEY,
+                GreetingActorBehavior::create
         ));
     }
 }

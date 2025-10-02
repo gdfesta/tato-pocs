@@ -16,7 +16,7 @@ import jakarta.ws.rs.core.MediaType;
 public class GreetingResource {
 
     @Inject
-    private GreetingService greetingService;
+    GreetingService greetingService;
 
     @POST
     @Path("/{name}")

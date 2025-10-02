@@ -17,32 +17,21 @@ import jakarta.inject.Inject;
 public class GreetingService {
 
     @Inject
-    private ClusterSharding sharding;
+    ClusterSharding sharding;
 
     public Uni<GreetingState> get(String name) {
         var entityRef = sharding.entityRefFor(GreetingActorBehavior.ENTITY_TYPE_KEY, name);
-        return Uni.createFrom().completionStage(
-                entityRef.<GreetingState>ask(
-                        replyTo -> new GreetingCommand.Get(replyTo),
-                        Duration.ofSeconds(5)));
+        return Uni.createFrom().completionStage(entityRef.ask(GreetingCommand.Get::new, Duration.ofSeconds(5)));
     }
 
     public Uni<GreetingState> greet(String name) {
         var entityRef = sharding.entityRefFor(GreetingActorBehavior.ENTITY_TYPE_KEY, name);
-        return Uni.createFrom().completionStage(
-                entityRef.<StatusReply<GreetingState>>ask(
-                        replyTo -> new GreetingCommand.Greet(name, replyTo),
-                        Duration.ofSeconds(5)))
-                .flatMap(this::toUni);
+        return Uni.createFrom().completionStage(entityRef.<StatusReply<GreetingState>>ask(replyTo -> new GreetingCommand.Greet(name, replyTo), Duration.ofSeconds(5))).flatMap(this::toUni);
     }
 
     public Uni<GreetingState> ungreet(String name) {
         var entityRef = sharding.entityRefFor(GreetingActorBehavior.ENTITY_TYPE_KEY, name);
-        return Uni.createFrom().completionStage(
-                entityRef.<StatusReply<GreetingState>>ask(
-                        replyTo -> new GreetingCommand.UnGreet(replyTo),
-                        Duration.ofSeconds(5)))
-                .flatMap(this::toUni);
+        return Uni.createFrom().completionStage(entityRef.ask(GreetingCommand.UnGreet::new, Duration.ofSeconds(5))).flatMap(this::toUni);
     }
 
     private Uni<GreetingState> toUni(StatusReply<GreetingState> statusReply) {

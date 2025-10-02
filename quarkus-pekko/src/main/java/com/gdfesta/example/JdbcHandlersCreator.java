@@ -48,7 +48,7 @@ public class JdbcHandlersCreator {
                         "greetings-count-readside-daemon",
                         GreetingActorBehavior.tags.size(),
                         id -> {
-                            var tag = GreetingActorBehavior.tags.get((Integer) id);
+                            var tag = GreetingActorBehavior.tags.get(id);
                             return ProjectionBehavior.create(
                                     JdbcProjection.exactlyOnce(
                                             ProjectionId.of("greetings-count-read-side-projection", tag),
@@ -66,7 +66,7 @@ public class JdbcHandlersCreator {
                         "greetings-kafka-daemon",
                         GreetingActorBehavior.tags.size(),
                         id -> {
-                            var tag = GreetingActorBehavior.tags.get((Integer) id);
+                            var tag = GreetingActorBehavior.tags.get(id);
                             return ProjectionBehavior.create(
                                     JdbcProjection.exactlyOnce(
                                             ProjectionId.of("greetings-kafka-projection", tag),

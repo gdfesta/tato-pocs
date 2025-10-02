@@ -20,9 +20,9 @@ public class GreetingsKafkaHandler extends JdbcHandler<EventEnvelope<GreetingEve
     @Override
     public void process(HibernateJdbcSession session, EventEnvelope<GreetingEvent> envelope) throws Exception {
         switch (envelope.event()) {
-            case GreetingEvent.Greeted e -> {
-                producer.publish(new Greeted(e.name()));
-            }
+            case GreetingEvent.Greeted e -> producer.publish(new Greeted(e.name()))
+                    .toCompletableFuture()
+                    .get();
             default -> {
                 // No action
             }

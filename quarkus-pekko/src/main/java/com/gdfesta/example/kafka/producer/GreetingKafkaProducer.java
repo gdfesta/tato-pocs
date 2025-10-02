@@ -29,7 +29,7 @@ public class GreetingKafkaProducer {
 
         var metadata = OutgoingKafkaRecordMetadata
             .<String>builder()
-            .withKey(event.name().toString())
+            .withKey(event.name())
             .build();
 
         message = message.addMetadata(metadata);

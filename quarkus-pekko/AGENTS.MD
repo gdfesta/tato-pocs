@@ -340,6 +340,35 @@ class GreetingResourceIT extends GreetingResourceTest {
    @Inject @Channel("event-greeting") Multi<Event> consumer;
    ```
 
+### Functional Programming Guidelines
+
+**Always prefer functional programming constructs in Java code:**
+- Use `Optional`, `Stream`, and lambda expressions for data processing and control flow.
+- Favor immutability and pure functions—avoid mutating state or reassigning variables.
+- Use method references and functional interfaces where possible.
+- Refactor imperative logic to declarative style (e.g., replacing null checks with `Optional`, loops with `Stream`).
+- Prefer returning new objects over modifying existing ones.
+- Example (refactor):
+```java
+// Imperative
+GreetingsCountModel greeting = findById(name);
+if (greeting == null) {
+    greeting = new GreetingsCountModel(name, 1, Instant.now());
+} else {
+    greeting.greetingCount++;
+    greeting.lastGreetedAt = Instant.now();
+}
+persistAndFlush(greeting);
+
+// Functional
+GreetingsCountModel greeting = Optional.ofNullable(findById(name))
+    .map(existing -> new GreetingsCountModel(name, existing.greetingCount + 1, Instant.now()))
+    .orElseGet(() -> new GreetingsCountModel(name, 1, Instant.now()));
+persistAndFlush(greeting);
+```
+- Use functional style in event sourcing, service, and projection handler logic.
+- Review code for opportunities to use functional programming during code review.
+
 ## Security Considerations
 
 ### Current State (Demonstration Project)
@@ -471,7 +500,7 @@ curl http://localhost:7626/cluster/members  # (after port-forward)
 
 3. **Register with Cluster Sharding**:
    ```java
-   // In ShardingsCreator.java
+   // In ShardsCreator.java
    sharding.init(Entity.of(
        EntityActorBehavior.ENTITY_TYPE_KEY,
        EntityActorBehavior::create
@@ -602,7 +631,7 @@ curl http://<service>:7626/ready
 ### Common Issues
 
 **Actor not receiving commands**:
-- Verify cluster sharding initialization in `ShardingsCreator`
+- Verify cluster sharding initialization in `ShardsCreator`
 - Check entity type key matches in actor and REST resource
 - Ensure unique entity IDs in tests
 

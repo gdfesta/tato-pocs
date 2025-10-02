@@ -10,7 +10,6 @@ import org.apache.pekko.persistence.typed.javadsl.EventHandler;
 import org.apache.pekko.persistence.typed.javadsl.EventSourcedBehavior;
 import org.apache.pekko.persistence.typed.javadsl.RetentionCriteria;
 
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
@@ -21,10 +20,9 @@ public class GreetingActorBehavior
     public static final EntityTypeKey<GreetingCommand> ENTITY_TYPE_KEY = EntityTypeKey.create(GreetingCommand.class,
             "greeting-aggregate");
 
-    public static final List<String> tags = Collections
-            .unmodifiableList(Arrays.asList("greeting-0", "greeting-1", "greeting-2", "greeting-3", "greeting-4"));
+    public static final List<String> tags = List.of("greeting-0", "greeting-1", "greeting-2", "greeting-3", "greeting-4");
 
-    public static final Behavior<GreetingCommand> create(EntityContext<GreetingCommand> entityContext) {
+    public static Behavior<GreetingCommand> create(EntityContext<GreetingCommand> entityContext) {
         return new GreetingActorBehavior(
                 PersistenceId.of(entityContext.getEntityTypeKey().name(), entityContext.getEntityId()));
     }
@@ -50,9 +48,7 @@ public class GreetingActorBehavior
 
                                 var effect = events.isEmpty() ? Effect().none() : Effect().persist(events);
 
-                                return effect.thenRun(newState -> {
-                                    command.replyTo().tell(StatusReply.success(newState));
-                                });
+                                return effect.thenRun(newState -> command.replyTo().tell(StatusReply.success(newState)));
                             } catch (IllegalStateException e) {
                                 return Effect().reply(command.replyTo(), StatusReply.error(e));
                             }
@@ -64,7 +60,7 @@ public class GreetingActorBehavior
     public EventHandler<GreetingState, GreetingEvent> eventHandler() {
         return newEventHandlerBuilder()
                 .forAnyState()
-                .onAnyEvent((state, event) -> state.onEvent(event));
+                .onAnyEvent(GreetingState::onEvent);
     }
 
     @Override

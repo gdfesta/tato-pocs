@@ -5,22 +5,17 @@ import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.transaction.Transactional;
 
 import java.time.Instant;
+import java.util.Optional;
 
 @ApplicationScoped
 public class GreetingsCountRepository implements PanacheRepositoryBase<GreetingsCountModel, String> {
 
     @Transactional
     public void upsertGreeting(String name) {
-        GreetingsCountModel greeting = findById(name);
-
-        if (greeting == null) {
-            greeting = new GreetingsCountModel(name, 0, Instant.now());
-        }
-
-        greeting.name = name;
-        greeting.greetingCount = greeting.greetingCount + 1;
-        greeting.lastGreetedAt = Instant.now();
-
-        persistAndFlush(greeting);
+        GreetingsCountModel greeting = Optional.ofNullable(findById(name))
+                .map(existing -> new GreetingsCountModel(name, existing.greetingCount + 1, Instant.now()))
+                .orElseGet(() -> new GreetingsCountModel(name, 1, Instant.now()));
+        getEntityManager().merge(greeting);
+        flush();
     }
 }
