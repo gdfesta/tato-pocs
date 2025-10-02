@@ -1,0 +1,39 @@
+# Kubernetes-specific configuration
+quarkus:
+  datasource:
+    db-kind: postgresql
+    devservices:
+      enabled: false
+    # Database connection will be provided via environment variables
+
+  flyway:
+    migrate-at-start: true
+    clean-at-start: false
+    baseline-on-migrate: true
+    locations: db/migration
+
+  # Container image configuration
+  container-image:
+    build: true
+    group: com.gdfesta.example
+    name: quarkus-pekko
+    tag: 1.0.0-SNAPSHOT
+
+  # Health checks
+  health:
+    extensions:
+      enabled: true
+
+  # Kafka Dev Services disabled for k8s
+  kafka:
+    devservices:
+      enabled: false
+
+# Kafka configuration for Kubernetes
+# Will be provided via environment variables or ConfigMap
+mp:
+  messaging:
+    outgoing:
+      greeting-events:
+        connector: smallrye-kafka
+        topic: event.greeting

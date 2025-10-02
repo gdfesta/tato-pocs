@@ -1,0 +1,6 @@
+pandas==2.1.4
+numpy==1.26.4
+scikit-learn==1.4.2
+mlflow==2.12.1 # this is because pycaret 3.0.1 requires mlflow<3
+boto3==1.40.37
+pycaret==3.3.2

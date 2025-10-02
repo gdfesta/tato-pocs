@@ -1,0 +1,378 @@
+{
+  "name": "Sponsor reply",
+  "nodes": [
+    {
+      "parameters": {
+        "pollTimes": {
+          "item": [
+            {
+              "mode": "everyMinute"
+            }
+          ]
+        },
+        "simple": false,
+        "filters": {},
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmailTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        0,
+        0
+      ],
+      "id": "0d6f45f7-dd9a-4ba8-ae96-eea8a5bb18ea",
+      "name": "Gmail Trigger",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "9DY3euyy05jdPMZ3",
+          "name": "Gmail account 4"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "48362988-8561-4a24-9ee5-e177b43e956c",
+              "name": "Email Context",
+              "value": "=From: {{ $json.headers.from }}\n\nSubject: {{ $json.headers.subject }}\n\nEmail Body: {{ $json.text }}\n",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        180,
+        0
+      ],
+      "id": "ee489d8a-a53f-4f99-b03d-5e737541d794",
+      "name": "Edit Fields"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=**Role:**  \nYour task is to determine whether an email is related to a sponsorship deal or not.  \n\nRespond with a JSON object containing the following fields:  \n\n- **isSponsorship:** Can be either `\"true\"` or `\"false\"`.  \n- **reasoning:** Explain your answer.  \n\nThink step by step about your response.\n\n{{ $json['Email Context'] }}",
+        "hasOutputParser": true,
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 1.7,
+      "position": [
+        340,
+        0
+      ],
+      "id": "ca342c6b-e56b-4b59-bcaa-dffccb95bd97",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "mode": "list",
+          "value": "gpt-4o-mini"
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        340,
+        260
+      ],
+      "id": "d5250c9b-ff90-497c-bd3b-fcb6c0c36e94",
+      "name": "OpenAI Chat Model",
+      "credentials": {
+        "openAiApi": {
+          "id": "wWdCmHfuvziTkduw",
+          "name": "OpenAi account 3"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "schemaType": "manual",
+        "inputSchema": "{\n\t\"type\": \"object\",\n\t\"properties\": {\n\t\t\"isSponsorship\": {\n\t\t\t\"type\": \"boolean\"\n\t\t},\n\t\t\"reasoning\": {\n\t\t\t\"type\": \"string\"\n\t\t}\n\t}\n}"
+      },
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.2,
+      "position": [
+        500,
+        260
+      ],
+      "id": "ee9f8671-567e-4e10-b635-3670dbd8eef5",
+      "name": "Structured Output Parser"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "f7b8641c-39bc-4c31-b68a-1d673389ac0f",
+              "leftValue": "={{ $json.output.isSponsorship }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        640,
+        0
+      ],
+      "id": "cfdd775a-8f14-4a0c-85f6-499d95200e4f",
+      "name": "If"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [
+        1100,
+        160
+      ],
+      "id": "d292a035-352a-4789-9215-898b89a82706",
+      "name": "No Operation, do nothing"
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "value": "gpt-4o-mini",
+          "mode": "list",
+          "cachedResultName": "GPT-4O-MINI"
+        },
+        "messages": {
+          "values": [
+            {
+              "content": "=**Role:**  \nYou work for a YouTube channel called *AI mit Arnie*.  \nYour task is to respond to sponsorship inquiries by drafting a reply email.  \n\n**Task:**  \nCarefully review the email context below and write a friendly and professional email.  \nReturn only the **email body in HTML format**—do **not** include a header, only the body!  \nThe email should include details about sponsorship costs and conditions.  \n\n**Conditions:**  \n\n### Sponsorship Terms for the YouTube Channel *AI mit Arnie*  \n\n#### **Channel Overview**  \n- **Channel Name:** AI mit Arnie  \n- **Subscribers:** 15,000+  \n- **Average Views per Video:** 3,000 – 10,000  \n- **Content Focus:** Artificial Intelligence  \n\n#### **Sponsorship Pricing**  \n- **Standalone Video:** €800 – €1,300  \n- **Integrated Sponsorship Mention (60 seconds):** €600  \n\n#### **Additional Info**  \n*AI mit Arnie* only accepts sponsors that make sense for its target audience. In general, the channel rejects anything that does not provide real value to viewers and does not promote products that the creator does not personally use.",
+              "role": "system"
+            },
+            {
+              "content": "=Email Context: {{ $('Edit Fields').item.json['Email Context'] }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "typeVersion": 1.8,
+      "position": [
+        800,
+        -100
+      ],
+      "id": "74672a31-8aff-4576-a9cd-2cf4ef9e4df6",
+      "name": "OpenAI",
+      "credentials": {
+        "openAiApi": {
+          "id": "wWdCmHfuvziTkduw",
+          "name": "OpenAi account 3"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "reply",
+        "messageId": "={{ $('Gmail Trigger').item.json.id }}",
+        "message": "={{ $json.message.content }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        1100,
+        -100
+      ],
+      "id": "30cf5db7-bdbc-4fab-8825-e0e9632fd055",
+      "name": "Gmail",
+      "webhookId": "d0a43dc5-ccff-495f-b2bb-801393e321fb",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "9DY3euyy05jdPMZ3",
+          "name": "Gmail account 4"
+        }
+      }
+    }
+  ],
+  "pinData": {
+    "Gmail Trigger": [
+      {
+        "json": {
+          "id": "19538d26f0f05c0c",
+          "threadId": "19538d26f0f05c0c",
+          "labelIds": [
+            "UNREAD",
+            "IMPORTANT",
+            "CATEGORY_PERSONAL",
+            "INBOX"
+          ],
+          "sizeEstimate": 5796,
+          "headers": {
+            "delivered-to": "Delivered-To: arnio93@gmail.com",
+            "received": "Received: from mail-sor-f41.google.com (mail-sor-f41.google.com. [209.85.220.41])\r\n        by mx.google.com with SMTPS id 2adb3069b0e04-54618fc5219sor3334777e87.19.2025.02.24.08.37.49\r\n        for <arnio93@gmail.com>\r\n        (Google Transport Security);\r\n        Mon, 24 Feb 2025 08:37:49 -0800 (PST)",
+            "x-received": "X-Received: by 2002:a05:6512:308b:b0:540:1b07:e033 with SMTP id\r\n 2adb3069b0e04-54838f79748mr6014864e87.45.1740415068773; Mon, 24 Feb 2025\r\n 08:37:48 -0800 (PST)",
+            "arc-seal": "ARC-Seal: i=1; a=rsa-sha256; t=1740415069; cv=none;\r\n        d=google.com; s=arc-20240605;\r\n        b=IlJ5422PEUGsuVB7BYvLrI6ZzOvlXuV516F5DBZuM7DpAvwoyTwQ5b1JCuXNmLfQfP\r\n         hU1roGedhdfT1B+Cn+JDG8NXivnZ+/vho1A6p9GE1n+k21DDSsGAKfwOOWUYdP0Uw98w\r\n         GO1+W9QmdObPwT0OkACYrpoqygLqsFOV12uMhKStz6RR1asAGxmedapG5Ns/K6htHbur\r\n         qbXBCJ/HkFtQ3xzFyhb/+p62AlZ5O+UP7TWNfZMOFAi/S10+k7OHEhfRQQquZxMf8lT5\r\n         vxh9ycXUfJdKWjbHSwK0KO0k5bfxFn5het5pwyWyVe+wILbKVbuwJxueovuAhYpsPoqs\r\n         430Q==",
+            "arc-message-signature": "ARC-Message-Signature: i=1; a=rsa-sha256; c=relaxed/relaxed; d=google.com; s=arc-20240605;\r\n        h=to:subject:message-id:date:from:mime-version:dkim-signature;\r\n        bh=gCTIBZ+jSX6zvm4IE2ZVqqD+LAKyWcOGxTYGxoox+9c=;\r\n        fh=1I5lI/YWBMx+BAWNPjVfLGafQlVshmWV3Md24s82mvc=;\r\n        b=iPVlLd+QiGLMv5rInTgaBCJm3Me5hc1MsE0mjnKvTVkmg0nhDIqMC8Qma/2jKfZfkq\r\n         52VTSJg5XgZ8GV3DGYwWQBgevWab0W5iNdIcQkjequLzoZe+fIryamR5e5cj3t0kaCzu\r\n         ZGAtOOZhuLxYj8GdQ+cLLrlNU/T2IXM/AQX2vkWtAHP81BRgeLAOr46glYJYLESI++gj\r\n         J7/P4TFQlhXhHK3NfN3Pq6/WDHPzNOhPbSUnvcGchxIlfh8hvvdib3s1HBPAERzsuxwY\r\n         A4nBRQCm50BCJ7WHn7V+bLZme1yMPUi7IN+93xWZbRt1trrdaomiFlQAL3FK3HT6RAfn\r\n         PjYw==;\r\n        dara=google.com",
+            "arc-authentication-results": "ARC-Authentication-Results: i=1; mx.google.com;\r\n       dkim=pass header.i=@gmail.com header.s=20230601 header.b=\"hIW/XfTv\";\r\n       spf=pass (google.com: domain of arnoldoberleiterhofer@gmail.com designates 209.85.220.41 as permitted sender) smtp.mailfrom=arnoldoberleiterhofer@gmail.com;\r\n       dmarc=pass (p=NONE sp=QUARANTINE dis=NONE) header.from=gmail.com;\r\n       dara=pass header.i=@gmail.com",
+            "return-path": "Return-Path: <arnoldoberleiterhofer@gmail.com>",
+            "received-spf": "Received-SPF: pass (google.com: domain of arnoldoberleiterhofer@gmail.com designates 209.85.220.41 as permitted sender) client-ip=209.85.220.41;",
+            "authentication-results": "Authentication-Results: mx.google.com;\r\n       dkim=pass header.i=@gmail.com header.s=20230601 header.b=\"hIW/XfTv\";\r\n       spf=pass (google.com: domain of arnoldoberleiterhofer@gmail.com designates 209.85.220.41 as permitted sender) smtp.mailfrom=arnoldoberleiterhofer@gmail.com;\r\n       dmarc=pass (p=NONE sp=QUARANTINE dis=NONE) header.from=gmail.com;\r\n       dara=pass header.i=@gmail.com",
+            "dkim-signature": "DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;\r\n        d=gmail.com; s=20230601; t=1740415069; x=1741019869; dara=google.com;\r\n        h=to:subject:message-id:date:from:mime-version:from:to:cc:subject\r\n         :date:message-id:reply-to;\r\n        bh=gCTIBZ+jSX6zvm4IE2ZVqqD+LAKyWcOGxTYGxoox+9c=;\r\n        b=hIW/XfTvnJSBFS8mk/SDhfQ9y14yO+QCroOHYG83wkiYZrG8NI8ttmmk5jlePr0anB\r\n         YYDuvmGW7RvC55JOcmjxLE70y40NhWldn4cqyR/r47/rcYisO7V5ZJ2puz4WWBNJXJuP\r\n         m8dLwr8tHxmeWFFwIJlcBA2oDfDFvfKiWY10S6FvlLGx2CG/Ege/8GQQZE3akfRLHsF5\r\n         VS10u/Q+lCfDOJ4fkefVcBQuS7HYzbnSS9JQ0mEwV09QsEUqO9+EVQgbYCDwwjZA5+pr\r\n         CpLwEb/1fJRMFq9zVIFN6eiBQdb/MNaMnKe9I0Myj+z21Bb4DIEddAbgf3XE0yscHVCH\r\n         //zA==",
+            "x-google-dkim-signature": "X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;\r\n        d=1e100.net; s=20230601; t=1740415069; x=1741019869;\r\n        h=to:subject:message-id:date:from:mime-version:x-gm-message-state\r\n         :from:to:cc:subject:date:message-id:reply-to;\r\n        bh=gCTIBZ+jSX6zvm4IE2ZVqqD+LAKyWcOGxTYGxoox+9c=;\r\n        b=nhJSpvelWWYQMyh45qFJFHdR7aH1MTcCcE1Oqma+nF9mZBbs0myGeSmykJGsD3pGtc\r\n         3g+C8n1GFvGXs7VyWNtvthqNrxOmChrwwl5WyTUYz9Hp+95XADNv7mjYp6hhpudB5E5p\r\n         XbLgbV8cEiF0IpR2MsIHuGJAwVKkdA58XT8dleDlIMgHRLFU0NgxJ5a75hfMN6ijibkh\r\n         SSDxR/TtK1GHz4qGFnwTW4ih0pK1sz5vZux+rXd0NeEVeHp/1myPsjbgikU1FNzTf1Dq\r\n         gPz1+kwZn0AMjmesbMrg8B4KFOZ+eMHjvNpTVbrXGXk/YGd6Jux3xJ+sbSzV+76Y98y1\r\n         7mAw==",
+            "x-gm-message-state": "X-Gm-Message-State: AOJu0YwKYdENbITE0Q0rAx+v9qvWuxwGWrldINpj97UmanzIyqQva4k5\r\n\tX/JSqtUUIEbCxXZuuflsYEvl0q/Qh14uyfRsin7Q0vptAsfITq8JtfD5Jf/ya1GoKhByArsbnFy\r\n\tHeevnfzu3Gv6ao3UkSbIf+y3z6hs5+w==",
+            "x-gm-gg": "X-Gm-Gg: ASbGncuThwc51KIZfarJ2DrEDWLB4j+ygyv89aCExE5/GWe9h9vP2yLSzDRZ3b2zhCo\r\n\trc8xifozS4L9LxMHSJUR3ghn1SzJ4ED5Ls17gfHNr/mtkM/VhwVMjsklrLeIgpA/4b484xNDfzX\r\n\t3dGYpsikw=",
+            "x-google-smtp-source": "X-Google-Smtp-Source: AGHT+IGTAxPsg9tpifAMwVjK2fsNpKf7b6Trrr+BzQ/b/6xcsurmxlQyRlwgOApRRdZZo//uiOd+6NmsCfJbt+3f8Nk=",
+            "mime-version": "MIME-Version: 1.0",
+            "from": "From: Arnold Oberleiter hofer <arnoldoberleiterhofer@gmail.com>",
+            "date": "Date: Mon, 24 Feb 2025 17:37:36 +0100",
+            "x-gm-features": "X-Gm-Features: AWEUYZmfYfvQHfRYNj4JKJL1q1nooMiTY2E6QEfZqNVviZO0F-SuopqTLgwO8eE",
+            "message-id": "Message-ID: <CAJm1jmci+4jFN6ASBWGOztLst1q8c1ipjP4CCqybjZ2vnEGaZQ@mail.gmail.com>",
+            "subject": "Subject: Sponsor",
+            "to": "To: arnio93@gmail.com",
+            "content-type": "Content-Type: multipart/alternative; boundary=\"000000000000efaa79062ee5f57c\""
+          },
+          "html": "<div dir=\"ltr\">Hey Arnie, i wanted to sponsor a video.<br>I sell green Pencils for Women over 60.<br><br>Best<br>Mark</div>\n",
+          "text": "Hey Arnie, i wanted to sponsor a video.\nI sell green Pencils for Women over 60.\n\nBest\nMark\n",
+          "textAsHtml": "<p>Hey Arnie, i wanted to sponsor a video.<br/>I sell green Pencils for Women over 60.</p><p>Best<br/>Mark</p>",
+          "subject": "Sponsor",
+          "date": "2025-02-24T16:37:36.000Z",
+          "to": {
+            "value": [
+              {
+                "address": "arnio93@gmail.com",
+                "name": ""
+              }
+            ],
+            "html": "<span class=\"mp_address_group\"><a href=\"mailto:arnio93@gmail.com\" class=\"mp_address_email\">arnio93@gmail.com</a></span>",
+            "text": "arnio93@gmail.com"
+          },
+          "from": {
+            "value": [
+              {
+                "address": "arnoldoberleiterhofer@gmail.com",
+                "name": "Arnold Oberleiter hofer"
+              }
+            ],
+            "html": "<span class=\"mp_address_group\"><span class=\"mp_address_name\">Arnold Oberleiter hofer</span> &lt;<a href=\"mailto:arnoldoberleiterhofer@gmail.com\" class=\"mp_address_email\">arnoldoberleiterhofer@gmail.com</a>&gt;</span>",
+            "text": "\"Arnold Oberleiter hofer\" <arnoldoberleiterhofer@gmail.com>"
+          },
+          "messageId": "<CAJm1jmci+4jFN6ASBWGOztLst1q8c1ipjP4CCqybjZ2vnEGaZQ@mail.gmail.com>"
+        }
+      }
+    ]
+  },
+  "connections": {
+    "Gmail Trigger": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Structured Output Parser": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "OpenAI",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "No Operation, do nothing",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI": {
+      "main": [
+        [
+          {
+            "node": "Gmail",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "1835e3c9-9bff-4b10-9856-b6b696966024",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "c0fc3202e0d7686fd80c309dae8df3a072650cceb18f2be2bb9798a3af0bf1cd"
+  },
+  "id": "LPn4cNIKqht5Mkb4",
+  "tags": []
+}

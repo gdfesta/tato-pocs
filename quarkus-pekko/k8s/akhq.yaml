@@ -1,0 +1,95 @@
+---
+# AKHQ ConfigMap
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: akhq-config
+  namespace: quarkus-pekko
+data:
+  application.yml: |
+    akhq:
+      connections:
+        kafka-cluster:
+          properties:
+            bootstrap.servers: "kafka-service:9092"
+
+      pagination:
+        page-size: 25
+
+      ui-options:
+        topic:
+          default-view: ALL
+          skip-consumer-groups: false
+          skip-last-record: false
+
+---
+# AKHQ Service
+apiVersion: v1
+kind: Service
+metadata:
+  name: akhq
+  namespace: quarkus-pekko
+  labels:
+    app: akhq
+spec:
+  type: ClusterIP
+  ports:
+  - port: 8080
+    targetPort: 8080
+    protocol: TCP
+    name: http
+  selector:
+    app: akhq
+
+---
+# AKHQ Deployment
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: akhq
+  namespace: quarkus-pekko
+  labels:
+    app: akhq
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: akhq
+  template:
+    metadata:
+      labels:
+        app: akhq
+    spec:
+      containers:
+      - name: akhq
+        image: tchiotludo/akhq:latest
+        ports:
+        - containerPort: 8080
+          name: http
+        volumeMounts:
+        - name: config
+          mountPath: /app/application.yml
+          subPath: application.yml
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "250m"
+          limits:
+            memory: "512Mi"
+            cpu: "500m"
+        livenessProbe:
+          httpGet:
+            path: /
+            port: 8080
+          initialDelaySeconds: 30
+          periodSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /
+            port: 8080
+          initialDelaySeconds: 20
+          periodSeconds: 5
+      volumes:
+      - name: config
+        configMap:
+          name: akhq-config

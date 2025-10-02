@@ -1,0 +1,71 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: quarkus-pekko
+  namespace: quarkus-pekko
+  labels:
+    app: quarkus-pekko
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: quarkus-pekko
+  template:
+    metadata:
+      labels:
+        app: quarkus-pekko
+    spec:
+      serviceAccountName: quarkus-pekko-sa
+      containers:
+      - name: quarkus-pekko
+        image: com.gdfesta.example/quarkus-pekko:1.0.0-SNAPSHOT
+        imagePullPolicy: IfNotPresent
+        ports:
+        - name: http
+          containerPort: 8080
+          protocol: TCP
+        - name: management
+          containerPort: 7626
+          protocol: TCP
+        envFrom:
+        - configMapRef:
+            name: app-config
+        env:
+        - name: KUBERNETES_NAMESPACE
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.namespace
+        resources:
+          requests:
+            memory: "512Mi"
+            cpu: "500m"
+          limits:
+            memory: "1Gi"
+            cpu: "1000m"
+        readinessProbe:
+          httpGet:
+            path: /q/health/ready
+            port: 8080
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
+        livenessProbe:
+          httpGet:
+            path: /q/health/live
+            port: 8080
+          initialDelaySeconds: 60
+          periodSeconds: 30
+          timeoutSeconds: 10
+          failureThreshold: 3
+        # Pekko management probe
+        startupProbe:
+          httpGet:
+            path: /ready
+            port: 7626
+          initialDelaySeconds: 45
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 30
+      terminationGracePeriodSeconds: 60

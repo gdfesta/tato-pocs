@@ -1,0 +1,13 @@
+# Test-specific configuration
+mp:
+  messaging:
+    incoming:
+      greeting-events-test:
+        connector: smallrye-kafka
+        topic: event.greeting
+        auto.offset.reset: latest
+        group-id: test-consumer-group-${quarkus.uuid}
+    outgoing:
+      greeting-commands-test:
+        connector: smallrye-kafka
+        topic: command.greeting

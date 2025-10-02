@@ -1,0 +1,24 @@
+quarkus:
+  datasource:
+    db-kind: postgresql
+    devservices:
+      enabled: true
+
+  flyway:
+    migrate-at-start: true
+    clean-at-start: true
+    baseline-on-migrate: true
+    locations: db/migration
+
+mp:
+  messaging:
+    outgoing:
+      greeting-events:
+        connector: smallrye-kafka
+        topic: event.greeting
+    incoming:
+      greeting-commands:
+        connector: smallrye-kafka
+        topic: command.greeting
+        auto.offset.reset: earliest
+        group-id: greeting-command-consumer-group

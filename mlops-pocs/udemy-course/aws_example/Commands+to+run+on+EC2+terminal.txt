@@ -1,0 +1,18 @@
+sudo apt update
+
+sudo apt install python3-pip
+
+sudo pip3 install pipenv virtualenv
+
+mkdir mlflow
+
+cd mlflow
+
+pipenv install mlflow awscli boto3 setuptools
+
+pipenv shell
+
+aws configure
+
+mlflow server -h 0.0.0.0 --backend-store-uri sqlite:///mlflow.db --default-artifact-root s3://mlflow-artifacts
+

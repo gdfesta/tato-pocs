@@ -1,0 +1,19 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: app-config
+  namespace: quarkus-pekko
+data:
+  # Database configuration
+  QUARKUS_DATASOURCE_JDBC_URL: "jdbc:postgresql://postgres:5432/quarkus"
+  QUARKUS_DATASOURCE_USERNAME: "quarkus"
+  QUARKUS_DATASOURCE_PASSWORD: "quarkus"
+
+  # Kafka configuration
+  KAFKA_BOOTSTRAP_SERVERS: "kafka-service:9092"
+
+  # Pekko cluster configuration
+  REQUIRED_CONTACT_POINT_NR: "3"
+
+  # Application profile
+  QUARKUS_PROFILE: "k8s"

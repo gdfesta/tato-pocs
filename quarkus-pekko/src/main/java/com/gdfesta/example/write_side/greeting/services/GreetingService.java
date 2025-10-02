@@ -1,0 +1,57 @@
+package com.gdfesta.example.write_side.greeting.services;
+
+import java.time.Duration;
+
+import org.apache.pekko.cluster.sharding.typed.javadsl.ClusterSharding;
+import org.apache.pekko.pattern.StatusReply;
+
+import com.gdfesta.example.write_side.greeting.aggregate.GreetingActorBehavior;
+import com.gdfesta.example.write_side.greeting.aggregate.GreetingCommand;
+import com.gdfesta.example.write_side.greeting.aggregate.GreetingState;
+
+import io.smallrye.mutiny.Uni;
+import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.inject.Inject;
+
+@ApplicationScoped
+public class GreetingService {
+
+    @Inject
+    private ClusterSharding sharding;
+
+    public Uni<GreetingState> get(String name) {
+        var entityRef = sharding.entityRefFor(GreetingActorBehavior.ENTITY_TYPE_KEY, name);
+        return Uni.createFrom().completionStage(
+                entityRef.<GreetingState>ask(
+                        replyTo -> new GreetingCommand.Get(replyTo),
+                        Duration.ofSeconds(5)));
+    }
+
+    public Uni<GreetingState> greet(String name) {
+        var entityRef = sharding.entityRefFor(GreetingActorBehavior.ENTITY_TYPE_KEY, name);
+        return Uni.createFrom().completionStage(
+                entityRef.<StatusReply<GreetingState>>ask(
+                        replyTo -> new GreetingCommand.Greet(name, replyTo),
+                        Duration.ofSeconds(5)))
+                .flatMap(this::toUni);
+    }
+
+    public Uni<GreetingState> ungreet(String name) {
+        var entityRef = sharding.entityRefFor(GreetingActorBehavior.ENTITY_TYPE_KEY, name);
+        return Uni.createFrom().completionStage(
+                entityRef.<StatusReply<GreetingState>>ask(
+                        replyTo -> new GreetingCommand.UnGreet(replyTo),
+                        Duration.ofSeconds(5)))
+                .flatMap(this::toUni);
+    }
+
+    private Uni<GreetingState> toUni(StatusReply<GreetingState> statusReply) {
+        if (statusReply.isSuccess()) {
+            var state = statusReply.getValue();
+            return Uni.createFrom().item(state);
+        } else {
+            return Uni.createFrom().failure(statusReply.getError());
+        }
+    }
+
+}
