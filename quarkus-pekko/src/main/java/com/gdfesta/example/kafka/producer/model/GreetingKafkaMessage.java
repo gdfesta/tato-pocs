@@ -9,10 +9,15 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
     include = JsonTypeInfo.As.PROPERTY,
     property = "messageType"
 )
-@JsonSubTypes({ @JsonSubTypes.Type(value = GreetingKafkaMessage.Greeted.class, name = "Greeted") })
-public sealed interface GreetingKafkaMessage {
-    String name();
+@JsonSubTypes({
+    @JsonSubTypes.Type(value = GreetingKafkaMessage.Greeted.class, name = "Greeted"),
+    @JsonSubTypes.Type(value = GreetingKafkaMessage.UnGreeted.class, name = "UnGreeted")
+})
+public sealed interface GreetingKafkaMessage permits GreetingKafkaMessage.Greeted, GreetingKafkaMessage.UnGreeted {
 
     @JsonTypeName("Greeted")
     record Greeted(String name) implements GreetingKafkaMessage {}
+
+    @JsonTypeName("UnGreeted")
+    record UnGreeted() implements GreetingKafkaMessage {}
 }
