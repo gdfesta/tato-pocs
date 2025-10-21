@@ -134,7 +134,15 @@ class GreetingsKafkaHandlerTest {
                         )
             );
 
-        int messagesAfterGreeting = TestKafkaConsumer.getMessages().size();
+        // Count messages for this specific name only
+        long messagesAfterGreeting = TestKafkaConsumer.getMessages()
+            .stream()
+            .filter(
+                msg ->
+                    msg instanceof GreetingKafkaMessage.Greeted(String name1) &&
+                    name1.equals(name)
+            )
+            .count();
 
         // DELETE (UnGreet) - should not produce Kafka message
         given().when().delete("/greetings/{name}", name).then().statusCode(200);
@@ -147,7 +155,15 @@ class GreetingsKafkaHandlerTest {
         }
 
         // Count should not increase (UnGreeted events are not published to Kafka)
-        int messagesAfterUnGreeting = TestKafkaConsumer.getMessages().size();
+        long messagesAfterUnGreeting = TestKafkaConsumer.getMessages()
+            .stream()
+            .filter(
+                msg ->
+                    msg instanceof GreetingKafkaMessage.Greeted(String name1) &&
+                    name1.equals(name)
+            )
+            .count();
+
         assertEquals(
             messagesAfterGreeting,
             messagesAfterUnGreeting,
