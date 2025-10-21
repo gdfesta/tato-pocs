@@ -273,7 +273,7 @@ class GreetingsCountRepositoryTest {
         assertTrue(
             after.lastGreetedAt.isAfter(beforeTimestamp) ||
                 after.lastGreetedAt.equals(beforeTimestamp),
-            "Timestamp should be updated or remain the same when decrementing"
+            "Timestamp should be updated (or equal due to timing precision) when decrementing"
         );
     }
 
