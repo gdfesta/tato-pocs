@@ -13,7 +13,7 @@ public class GreetingsCountModel {
     @Id
     public String name;
 
-    @Column(name = "greeting_count")
+    @Column(name = "count")
     public Integer greetingCount;
 
     @Column(name = "last_greeted_at")
