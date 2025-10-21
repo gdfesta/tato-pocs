@@ -26,7 +26,13 @@ public class GreetingKafkaProducer {
     public CompletionStage<Void> publish(GreetingKafkaMessage event) {
         var message = Message.of(event);
 
-        var metadata = OutgoingKafkaRecordMetadata.<String>builder().withKey(event.name()).build();
+        // Extract partition key based on message type
+        String partitionKey = switch (event) {
+            case GreetingKafkaMessage.Greeted greeted -> greeted.name();
+            case GreetingKafkaMessage.UnGreeted unGreeted -> "ungreeted";
+        };
+
+        var metadata = OutgoingKafkaRecordMetadata.<String>builder().withKey(partitionKey).build();
 
         message = message.addMetadata(metadata);
 
