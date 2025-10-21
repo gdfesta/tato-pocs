@@ -117,8 +117,8 @@ class GreetingsCountReadSideHandlerTest {
     }
 
     @Test
-    @DisplayName("UnGreeted event should NOT update database (no decrement)")
-    void testUnGreetedEventIgnored() {
+    @DisplayName("UnGreeted event should decrement database count")
+    void testUnGreetedEventDecrementsCount() {
         String name = generateUniqueName();
 
         // POST 3 greetings
@@ -137,23 +137,27 @@ class GreetingsCountReadSideHandlerTest {
         GreetingsCountModel before = findById(name);
         assertEquals(3, before.count);
 
-        // DELETE (UnGreet) - should not affect read-side database
+        // DELETE (UnGreet) - should decrement read-side database
         given().when().delete("/greetings/{name}", name).then().statusCode(200);
 
-        // Wait a bit for any potential projection processing
-        try {
-            Thread.sleep(1000);
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-        }
+        // Wait for projection to process UnGreeted event
+        await()
+            .atMost(10, TimeUnit.SECONDS)
+            .pollInterval(100, TimeUnit.MILLISECONDS)
+            .untilAsserted(() -> {
+                GreetingsCountModel model = findById(name);
+                assertNotNull(model, "Read model should still exist");
+                assertEquals(2, model.count, "UnGreeted event should decrement count to 2");
+            });
 
-        // Database should still have count=3 (UnGreeted event is ignored by read-side handler)
+        // Verify final state
         GreetingsCountModel after = findById(name);
         assertNotNull(after);
-        assertEquals(
-            3,
-            after.count,
-            "UnGreeted event should not decrement read-side count"
+        assertEquals(2, after.count);
+        assertTrue(
+            after.lastGreetedAt.isAfter(before.lastGreetedAt) ||
+                after.lastGreetedAt.equals(before.lastGreetedAt),
+            "Timestamp should be updated or remain the same"
         );
     }
 
@@ -217,6 +221,138 @@ class GreetingsCountReadSideHandlerTest {
                     model.count,
                     "All greetings should be counted even when sent rapidly"
                 );
+            });
+    }
+
+    @Test
+    @DisplayName("UnGreeted should decrement count to zero but not below")
+    void testUnGreetedDecrementsToZero() {
+        String name = generateUniqueName();
+
+        // POST 1 greeting
+        given().when().post("/greetings/{name}", name).then().statusCode(200);
+
+        // Wait for projection
+        await()
+            .atMost(10, TimeUnit.SECONDS)
+            .until(() -> {
+                GreetingsCountModel model = findById(name);
+                return model != null && model.count == 1;
+            });
+
+        // DELETE (UnGreet) once
+        given().when().delete("/greetings/{name}", name).then().statusCode(200);
+
+        // Wait for projection - count should be 0
+        await()
+            .atMost(10, TimeUnit.SECONDS)
+            .pollInterval(100, TimeUnit.MILLISECONDS)
+            .untilAsserted(() -> {
+                GreetingsCountModel model = findById(name);
+                assertNotNull(model, "Read model should still exist");
+                assertEquals(0, model.count, "Count should be decremented to 0");
+            });
+
+        // DELETE (UnGreet) again - count should remain at 0
+        given().when().delete("/greetings/{name}", name).then().statusCode(200);
+
+        // Wait for projection - count should still be 0 (not negative)
+        await()
+            .atMost(10, TimeUnit.SECONDS)
+            .pollInterval(100, TimeUnit.MILLISECONDS)
+            .untilAsserted(() -> {
+                GreetingsCountModel model = findById(name);
+                assertNotNull(model, "Read model should still exist");
+                assertEquals(0, model.count, "Count should not go below 0");
+            });
+    }
+
+    @Test
+    @DisplayName("Multiple UnGreeted events should properly decrement count")
+    void testMultipleUnGreetedEvents() {
+        String name = generateUniqueName();
+
+        // POST 5 greetings
+        for (int i = 0; i < 5; i++) {
+            given().when().post("/greetings/{name}", name).then().statusCode(200);
+        }
+
+        // Wait for all greetings to be projected
+        await()
+            .atMost(10, TimeUnit.SECONDS)
+            .until(() -> {
+                GreetingsCountModel model = findById(name);
+                return model != null && model.count == 5;
+            });
+
+        // DELETE (UnGreet) 3 times
+        for (int i = 0; i < 3; i++) {
+            given().when().delete("/greetings/{name}", name).then().statusCode(200);
+        }
+
+        // Wait for UnGreeted events to be processed - count should be 2
+        await()
+            .atMost(10, TimeUnit.SECONDS)
+            .pollInterval(100, TimeUnit.MILLISECONDS)
+            .untilAsserted(() -> {
+                GreetingsCountModel model = findById(name);
+                assertNotNull(model, "Read model should exist");
+                assertEquals(2, model.count, "Count should be decremented to 2 after 3 ungreets");
+            });
+    }
+
+    @Test
+    @DisplayName("Interleaved Greet and UnGreet events should be handled correctly")
+    void testInterleavedGreetAndUnGreet() {
+        String name = generateUniqueName();
+
+        // POST 2 greetings
+        given().when().post("/greetings/{name}", name).then().statusCode(200);
+        given().when().post("/greetings/{name}", name).then().statusCode(200);
+
+        // Wait for projection
+        await()
+            .atMost(10, TimeUnit.SECONDS)
+            .until(() -> {
+                GreetingsCountModel model = findById(name);
+                return model != null && model.count == 2;
+            });
+
+        // DELETE (UnGreet) once
+        given().when().delete("/greetings/{name}", name).then().statusCode(200);
+
+        // Wait for projection - count should be 1
+        await()
+            .atMost(10, TimeUnit.SECONDS)
+            .pollInterval(100, TimeUnit.MILLISECONDS)
+            .untilAsserted(() -> {
+                GreetingsCountModel model = findById(name);
+                assertEquals(1, model.count);
+            });
+
+        // POST 2 more greetings
+        given().when().post("/greetings/{name}", name).then().statusCode(200);
+        given().when().post("/greetings/{name}", name).then().statusCode(200);
+
+        // Wait for projection - count should be 3
+        await()
+            .atMost(10, TimeUnit.SECONDS)
+            .pollInterval(100, TimeUnit.MILLISECONDS)
+            .untilAsserted(() -> {
+                GreetingsCountModel model = findById(name);
+                assertEquals(3, model.count);
+            });
+
+        // DELETE (UnGreet) once
+        given().when().delete("/greetings/{name}", name).then().statusCode(200);
+
+        // Wait for projection - count should be 2
+        await()
+            .atMost(10, TimeUnit.SECONDS)
+            .pollInterval(100, TimeUnit.MILLISECONDS)
+            .untilAsserted(() -> {
+                GreetingsCountModel model = findById(name);
+                assertEquals(2, model.count, "Final count should be 2 after interleaved operations");
             });
     }
 }

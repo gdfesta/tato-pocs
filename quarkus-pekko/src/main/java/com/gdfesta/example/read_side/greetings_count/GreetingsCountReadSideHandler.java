@@ -21,8 +21,15 @@ public class GreetingsCountReadSideHandler
                 greeted.name()
             );
             case GreetingEvent.UnGreeted ignored -> {
-                // No read-side update needed
+                String name = extractEntityIdFromPersistenceId(envelope.persistenceId());
+                greetingsCountRepository.decrementGreeting(name);
             }
         }
+    }
+
+    private String extractEntityIdFromPersistenceId(String persistenceId) {
+        // PersistenceId format: "entityType|entityId"
+        int separatorIndex = persistenceId.indexOf('|');
+        return separatorIndex >= 0 ? persistenceId.substring(separatorIndex + 1) : persistenceId;
     }
 }

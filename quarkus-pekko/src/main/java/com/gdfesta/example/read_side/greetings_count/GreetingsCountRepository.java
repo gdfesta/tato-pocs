@@ -20,4 +20,19 @@ public class GreetingsCountRepository
         getEntityManager().merge(greeting);
         flush();
     }
+
+    @Transactional
+    public void decrementGreeting(String name) {
+        Optional.ofNullable(findById(name))
+            .ifPresent(existing -> {
+                int newCount = Math.max(existing.count - 1, 0);
+                GreetingsCountModel updated = new GreetingsCountModel(
+                    name,
+                    newCount,
+                    Instant.now()
+                );
+                getEntityManager().merge(updated);
+                flush();
+            });
+    }
 }
