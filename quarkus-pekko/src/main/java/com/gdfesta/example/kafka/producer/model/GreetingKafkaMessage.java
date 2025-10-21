@@ -14,10 +14,11 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
     @JsonSubTypes.Type(value = GreetingKafkaMessage.UnGreeted.class, name = "UnGreeted")
 })
 public sealed interface GreetingKafkaMessage permits GreetingKafkaMessage.Greeted, GreetingKafkaMessage.UnGreeted {
+    String name();
 
     @JsonTypeName("Greeted")
     record Greeted(String name) implements GreetingKafkaMessage {}
 
     @JsonTypeName("UnGreeted")
-    record UnGreeted() implements GreetingKafkaMessage {}
+    record UnGreeted(String name) implements GreetingKafkaMessage {}
 }

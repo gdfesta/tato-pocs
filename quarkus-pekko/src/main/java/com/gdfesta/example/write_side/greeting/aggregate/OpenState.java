@@ -7,7 +7,7 @@ public record OpenState(int count, int maxCount) implements GreetingState {
     public List<GreetingEvent> onCommand(GreetingCommand.NonGet command) {
         return switch (command) {
             case GreetingCommand.Greet greet -> List.of(new GreetingEvent.Greeted(greet.name()));
-            case GreetingCommand.UnGreet ignored -> List.of(new GreetingEvent.UnGreeted());
+            case GreetingCommand.UnGreet unGreet -> List.of(new GreetingEvent.UnGreeted(unGreet.name()));
         };
     }
 

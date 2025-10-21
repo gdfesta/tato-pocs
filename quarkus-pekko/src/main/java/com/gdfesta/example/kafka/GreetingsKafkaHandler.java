@@ -26,7 +26,7 @@ public class GreetingsKafkaHandler
                 .toCompletableFuture()
                 .get();
             case GreetingEvent.UnGreeted e -> producer
-                .publish(new UnGreeted())
+                .publish(new UnGreeted(e.name()))
                 .toCompletableFuture()
                 .get();
         }

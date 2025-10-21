@@ -6,8 +6,8 @@ public record CloseState(int count) implements GreetingState {
     @Override
     public List<GreetingEvent> onCommand(GreetingCommand.NonGet command) {
         switch (command) {
-            case GreetingCommand.UnGreet ignored -> {
-                return List.of(new GreetingEvent.UnGreeted());
+            case GreetingCommand.UnGreet unGreet -> {
+                return List.of(new GreetingEvent.UnGreeted(unGreet.name()));
             }
             case GreetingCommand.Greet ignored -> throw new IllegalStateException(
                 "Cannot greet more than " + count + " times"
