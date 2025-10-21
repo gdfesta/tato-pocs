@@ -33,15 +33,15 @@ public record OpenState(Optional<String> name, int count, int maxCount) implemen
         };
     }
 
-    private GreetingState incremented(String eventName) {
-        Optional<String> stateName = name.isEmpty() ? Optional.of(eventName) : name;
+    private GreetingState incremented(String fallbackName) {
+        Optional<String> stateName = name.isEmpty() ? Optional.of(fallbackName) : name;
         return (count + 1 == maxCount)
             ? new CloseState(stateName, count + 1)
             : new OpenState(stateName, count + 1, maxCount);
     }
 
-    private GreetingState decremented(String eventName) {
-        Optional<String> stateName = name.isEmpty() ? Optional.of(eventName) : name;
+    private GreetingState decremented(String fallbackName) {
+        Optional<String> stateName = name.isEmpty() ? Optional.of(fallbackName) : name;
         int newCount = Math.max(count - 1, 0);
         return new OpenState(stateName, newCount, maxCount);
     }
