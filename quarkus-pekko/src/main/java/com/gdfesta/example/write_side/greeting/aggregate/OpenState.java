@@ -1,26 +1,27 @@
 package com.gdfesta.example.write_side.greeting.aggregate;
 
 import java.util.List;
+import java.util.Optional;
 
-public record OpenState(String name, int count, int maxCount) implements GreetingState {
+public record OpenState(Optional<String> name, int count, int maxCount) implements GreetingState {
     @Override
     public List<GreetingEvent> onCommand(GreetingCommand.NonGet command) {
         return switch (command) {
             case GreetingCommand.Greet greet -> {
-                if (name != null && !name.equals(greet.name())) {
+                if (name.isPresent() && !name.get().equals(greet.name())) {
                     throw new IllegalStateException(
-                        "Cannot greet different name. Expected: " + name + ", got: " + greet.name()
+                        "Cannot greet different name. Expected: " + name.get() + ", got: " + greet.name()
                     );
                 }
                 yield List.of(new GreetingEvent.Greeted(greet.name()));
             }
             case GreetingCommand.UnGreet unGreet -> {
-                if (name == null) {
+                if (name.isEmpty()) {
                     throw new IllegalStateException(
                         "Cannot ungreet when state has no name"
                     );
                 }
-                yield List.of(new GreetingEvent.UnGreeted(name));
+                yield List.of(new GreetingEvent.UnGreeted(name.get()));
             }
         };
     }
@@ -34,14 +35,14 @@ public record OpenState(String name, int count, int maxCount) implements Greetin
     }
 
     private GreetingState incremented(String eventName) {
-        String stateName = (name == null) ? eventName : name;
+        Optional<String> stateName = name.isEmpty() ? Optional.of(eventName) : name;
         return (count + 1 == maxCount)
             ? new CloseState(stateName, count + 1)
             : new OpenState(stateName, count + 1, maxCount);
     }
 
     private GreetingState decremented(String eventName) {
-        String stateName = (name == null) ? eventName : name;
+        Optional<String> stateName = name.isEmpty() ? Optional.of(eventName) : name;
         int newCount = Math.max(count - 1, 0);
         return new OpenState(stateName, newCount, maxCount);
     }
