@@ -13,17 +13,17 @@ public class GreetingsCountModel {
     @Id
     public String name;
 
-    @Column(name = "greeting_count")
-    public Integer greetingCount;
+    @Column(name = "count")
+    public Integer count;
 
     @Column(name = "last_greeted_at")
     public Instant lastGreetedAt;
 
     public GreetingsCountModel() {}
 
-    public GreetingsCountModel(String name, Integer greetingCount, Instant lastGreetedAt) {
+    public GreetingsCountModel(String name, Integer count, Instant lastGreetedAt) {
         this.name = name;
-        this.greetingCount = greetingCount;
+        this.count = count;
         this.lastGreetedAt = lastGreetedAt;
     }
 }
