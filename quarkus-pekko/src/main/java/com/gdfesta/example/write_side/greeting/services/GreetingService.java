@@ -39,7 +39,7 @@ public class GreetingService {
         return Uni.createFrom()
             .completionStage(
                 entityRef.<StatusReply<GreetingState>>ask(
-                    replyTo -> new GreetingCommand.UnGreet(name, replyTo),
+                    replyTo -> new GreetingCommand.UnGreet(replyTo),
                     Duration.ofSeconds(5)
                 )
             )
