@@ -25,7 +25,7 @@ public class GreetingsCountRepository
     public void decrementGreeting(String name) {
         Optional.ofNullable(findById(name))
             .ifPresent(existing -> {
-                int newCount = Math.max(existing.greetingCount - 1, 0);
+                int newCount = Math.max(existing.count - 1, 0);
                 GreetingsCountModel updated = new GreetingsCountModel(
                     name,
                     newCount,
