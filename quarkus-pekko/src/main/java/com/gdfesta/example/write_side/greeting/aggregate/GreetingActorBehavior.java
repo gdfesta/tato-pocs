@@ -41,7 +41,7 @@ public class GreetingActorBehavior
 
     @Override
     public GreetingState emptyState() {
-        return new OpenState(0, 5);
+        return new OpenState(null, 0, 5);
     }
 
     @Override

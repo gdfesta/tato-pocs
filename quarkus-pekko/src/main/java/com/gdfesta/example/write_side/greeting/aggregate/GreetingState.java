@@ -6,6 +6,8 @@ import java.util.List;
 public sealed interface GreetingState
     extends JacksonJsonSerialization
     permits OpenState, CloseState {
+    String name();
+
     int count();
 
     List<GreetingEvent> onCommand(GreetingCommand.NonGet command);

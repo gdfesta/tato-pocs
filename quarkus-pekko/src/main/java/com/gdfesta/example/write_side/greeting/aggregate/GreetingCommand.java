@@ -13,5 +13,5 @@ public sealed interface GreetingCommand extends JacksonJsonSerialization {
 
     record Greet(String name, ActorRef<StatusReply<GreetingState>> replyTo) implements NonGet {}
 
-    record UnGreet(String name, ActorRef<StatusReply<GreetingState>> replyTo) implements NonGet {}
+    record UnGreet(ActorRef<StatusReply<GreetingState>> replyTo) implements NonGet {}
 }

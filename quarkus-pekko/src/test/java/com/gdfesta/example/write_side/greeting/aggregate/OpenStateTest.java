@@ -10,10 +10,11 @@ import org.junit.jupiter.api.Test;
 class OpenStateTest {
 
     @Test
-    @DisplayName("Should create OpenState with correct count and maxCount")
+    @DisplayName("Should create OpenState with correct name, count and maxCount")
     void testStateCreation() {
-        OpenState state = new OpenState(0, 5);
+        OpenState state = new OpenState("TestName", 0, 5);
 
+        assertEquals("TestName", state.name());
         assertEquals(0, state.count());
         assertEquals(5, state.maxCount());
     }
@@ -21,7 +22,7 @@ class OpenStateTest {
     @Test
     @DisplayName("Should return Greeted event when processing Greet command")
     void testGreetCommand() {
-        OpenState state = new OpenState(0, 5);
+        OpenState state = new OpenState("John", 0, 5);
         GreetingCommand.Greet command = new GreetingCommand.Greet("John", null);
 
         List<GreetingEvent> events = state.onCommand(command);
@@ -34,8 +35,8 @@ class OpenStateTest {
     @Test
     @DisplayName("Should return UnGreeted event when processing UnGreet command")
     void testUnGreetCommand() {
-        OpenState state = new OpenState(2, 5);
-        GreetingCommand.UnGreet command = new GreetingCommand.UnGreet("John", null);
+        OpenState state = new OpenState("John", 2, 5);
+        GreetingCommand.UnGreet command = new GreetingCommand.UnGreet(null);
 
         List<GreetingEvent> events = state.onCommand(command);
 
@@ -47,65 +48,71 @@ class OpenStateTest {
     @Test
     @DisplayName("Should increment count when processing Greeted event")
     void testGreetedEventIncrement() {
-        OpenState state = new OpenState(0, 5);
+        OpenState state = new OpenState(null, 0, 5);
         GreetingEvent.Greeted event = new GreetingEvent.Greeted("Alice");
 
         GreetingState newState = state.onEvent(event);
 
         assertInstanceOf(OpenState.class, newState);
+        assertEquals("Alice", newState.name());
         assertEquals(1, newState.count());
 
         // Test another increment
         GreetingState nextState = newState.onEvent(event);
         assertInstanceOf(OpenState.class, nextState);
+        assertEquals("Alice", nextState.name());
         assertEquals(2, nextState.count());
     }
 
     @Test
     @DisplayName("Should transition to CloseState when count reaches maxCount")
     void testGreetedEventTransitionToClosed() {
-        OpenState state = new OpenState(4, 5);
+        OpenState state = new OpenState("Bob", 4, 5);
         GreetingEvent.Greeted event = new GreetingEvent.Greeted("Bob");
 
         GreetingState newState = state.onEvent(event);
 
         assertInstanceOf(CloseState.class, newState);
+        assertEquals("Bob", newState.name());
         assertEquals(5, newState.count());
     }
 
     @Test
     @DisplayName("Should decrement count when processing UnGreeted event")
     void testUnGreetedEventDecrement() {
-        OpenState state = new OpenState(3, 5);
+        OpenState state = new OpenState("TestName", 3, 5);
         GreetingEvent.UnGreeted event = new GreetingEvent.UnGreeted("TestName");
 
         GreetingState newState = state.onEvent(event);
 
         assertInstanceOf(OpenState.class, newState);
+        assertEquals("TestName", newState.name());
         assertEquals(2, newState.count());
 
         // Test another decrement
         GreetingState nextState = newState.onEvent(event);
         assertInstanceOf(OpenState.class, nextState);
+        assertEquals("TestName", nextState.name());
         assertEquals(1, nextState.count());
     }
 
     @Test
     @DisplayName("Should not decrement count below zero")
     void testUnGreetedEventFloorAtZero() {
-        OpenState state = new OpenState(0, 5);
+        OpenState state = new OpenState("TestName", 0, 5);
         GreetingEvent.UnGreeted event = new GreetingEvent.UnGreeted("TestName");
 
         GreetingState newState = state.onEvent(event);
 
         assertInstanceOf(OpenState.class, newState);
+        assertEquals("TestName", newState.name());
         assertEquals(0, newState.count());
     }
 
     @Test
     @DisplayName("Should return new state instances (immutability)")
     void testStateImmutability() {
-        OpenState originalState = new OpenState(2, 5);
+        OpenState originalState = new OpenState("Charlie", 2, 5);
         GreetingEvent.Greeted event = new GreetingEvent.Greeted("Charlie");
 
         GreetingState newState = originalState.onEvent(event);
@@ -113,5 +120,35 @@ class OpenStateTest {
         assertNotSame(originalState, newState);
         assertEquals(2, originalState.count()); // Original unchanged
         assertEquals(3, newState.count()); // New state modified
+    }
+
+    @Test
+    @DisplayName("Should throw IllegalStateException when Greet command has different name")
+    void testGreetCommandWithDifferentName() {
+        OpenState state = new OpenState("John", 0, 5);
+        GreetingCommand.Greet command = new GreetingCommand.Greet("Jane", null);
+
+        IllegalStateException exception = assertThrows(
+            IllegalStateException.class,
+            () -> state.onCommand(command)
+        );
+
+        assertTrue(exception.getMessage().contains("Cannot greet different name"));
+        assertTrue(exception.getMessage().contains("Expected: John"));
+        assertTrue(exception.getMessage().contains("got: Jane"));
+    }
+
+    @Test
+    @DisplayName("Should throw IllegalStateException when UnGreet command and state has no name")
+    void testUnGreetCommandWithNoName() {
+        OpenState state = new OpenState(null, 2, 5);
+        GreetingCommand.UnGreet command = new GreetingCommand.UnGreet(null);
+
+        IllegalStateException exception = assertThrows(
+            IllegalStateException.class,
+            () -> state.onCommand(command)
+        );
+
+        assertTrue(exception.getMessage().contains("Cannot ungreet when state has no name"));
     }
 }
