@@ -50,14 +50,14 @@ class GreetingsCountReadSideHandlerTest {
             .untilAsserted(() -> {
                 GreetingsCountModel model = findById(name);
                 assertNotNull(model, "Read model should exist in database");
-                assertEquals(1, model.greetingCount, "Count should be 1 after first greeting");
+                assertEquals(1, model.count, "Count should be 1 after first greeting");
             });
 
         // Verify final state
         GreetingsCountModel model = findById(name);
         assertNotNull(model);
         assertEquals(name, model.name);
-        assertEquals(1, model.greetingCount);
+        assertEquals(1, model.count);
         assertNotNull(model.lastGreetedAt);
     }
 
@@ -78,7 +78,7 @@ class GreetingsCountReadSideHandlerTest {
             .untilAsserted(() -> {
                 GreetingsCountModel model = findById(name);
                 assertNotNull(model, "Read model should exist");
-                assertEquals(3, model.greetingCount, "Count should be 3 after three greetings");
+                assertEquals(3, model.count, "Count should be 3 after three greetings");
             });
     }
 
@@ -108,7 +108,7 @@ class GreetingsCountReadSideHandlerTest {
             .pollInterval(100, TimeUnit.MILLISECONDS)
             .untilAsserted(() -> {
                 GreetingsCountModel model = findById(name);
-                assertEquals(2, model.greetingCount);
+                assertEquals(2, model.count);
                 assertTrue(
                     model.lastGreetedAt.isAfter(first.lastGreetedAt),
                     "Timestamp should be updated after second greeting"
@@ -131,11 +131,11 @@ class GreetingsCountReadSideHandlerTest {
             .atMost(10, TimeUnit.SECONDS)
             .until(() -> {
                 GreetingsCountModel model = findById(name);
-                return model != null && model.greetingCount == 3;
+                return model != null && model.count == 3;
             });
 
         GreetingsCountModel before = findById(name);
-        assertEquals(3, before.greetingCount);
+        assertEquals(3, before.count);
 
         // DELETE (UnGreet) - should not affect read-side database
         given().when().delete("/greetings/{name}", name).then().statusCode(200);
@@ -152,7 +152,7 @@ class GreetingsCountReadSideHandlerTest {
         assertNotNull(after);
         assertEquals(
             3,
-            after.greetingCount,
+            after.count,
             "UnGreeted event should not decrement read-side count"
         );
     }
@@ -188,9 +188,9 @@ class GreetingsCountReadSideHandlerTest {
                 assertNotNull(bobModel, "Bob should have a record");
                 assertNotNull(charlieModel, "Charlie should have a record");
 
-                assertEquals(2, aliceModel.greetingCount, "Alice count should be 2");
-                assertEquals(1, bobModel.greetingCount, "Bob count should be 1");
-                assertEquals(3, charlieModel.greetingCount, "Charlie count should be 3");
+                assertEquals(2, aliceModel.count, "Alice count should be 2");
+                assertEquals(1, bobModel.count, "Bob count should be 1");
+                assertEquals(3, charlieModel.count, "Charlie count should be 3");
             });
     }
 
@@ -214,7 +214,7 @@ class GreetingsCountReadSideHandlerTest {
                 assertNotNull(model, "Read model should exist");
                 assertEquals(
                     totalGreetings,
-                    model.greetingCount,
+                    model.count,
                     "All greetings should be counted even when sent rapidly"
                 );
             });

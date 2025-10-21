@@ -55,7 +55,7 @@ class GreetingsCountRepositoryTest {
         GreetingsCountModel result = repository.findById(name);
         assertNotNull(result);
         assertEquals(name, result.name);
-        assertEquals(1, result.greetingCount);
+        assertEquals(1, result.count);
         assertNotNull(result.lastGreetedAt);
         assertTrue(result.lastGreetedAt.isBefore(Instant.now().plusSeconds(1)));
     }
@@ -69,19 +69,19 @@ class GreetingsCountRepositoryTest {
         repository.upsertGreeting(name);
         clearCache();
         GreetingsCountModel first = repository.findById(name);
-        assertEquals(1, first.greetingCount);
+        assertEquals(1, first.count);
 
         // Second greeting
         repository.upsertGreeting(name);
         clearCache();
         GreetingsCountModel second = repository.findById(name);
-        assertEquals(2, second.greetingCount);
+        assertEquals(2, second.count);
 
         // Third greeting
         repository.upsertGreeting(name);
         clearCache();
         GreetingsCountModel third = repository.findById(name);
-        assertEquals(3, third.greetingCount);
+        assertEquals(3, third.count);
     }
 
     @Test
@@ -136,7 +136,7 @@ class GreetingsCountRepositoryTest {
         GreetingsCountModel found = repository.findById(name);
         assertNotNull(found);
         assertEquals(name, found.name);
-        assertEquals(1, found.greetingCount);
+        assertEquals(1, found.count);
 
         // Verify it's in the database by counting
         long count = repository.count("name = ?1", name);
@@ -155,7 +155,7 @@ class GreetingsCountRepositoryTest {
         // Verify data is committed and visible in new query
         GreetingsCountModel result = repository.findById(name);
         assertNotNull(result);
-        assertEquals(1, result.greetingCount);
+        assertEquals(1, result.count);
 
         // Update again
         repository.upsertGreeting(name);
@@ -163,7 +163,7 @@ class GreetingsCountRepositoryTest {
 
         // Verify update is committed
         GreetingsCountModel updated = repository.findById(name);
-        assertEquals(2, updated.greetingCount);
+        assertEquals(2, updated.count);
     }
 
     @Test
@@ -186,9 +186,9 @@ class GreetingsCountRepositoryTest {
         repository.upsertGreeting(charlie);
 
         // Verify each has independent count
-        assertEquals(2, repository.findById(alice).greetingCount);
-        assertEquals(1, repository.findById(bob).greetingCount);
-        assertEquals(3, repository.findById(charlie).greetingCount);
+        assertEquals(2, repository.findById(alice).count);
+        assertEquals(1, repository.findById(bob).count);
+        assertEquals(3, repository.findById(charlie).count);
     }
 
     @Test

@@ -14,7 +14,7 @@ public class GreetingsCountRepository
     public void upsertGreeting(String name) {
         GreetingsCountModel greeting = Optional.ofNullable(findById(name))
             .map(
-                existing -> new GreetingsCountModel(name, existing.greetingCount + 1, Instant.now())
+                existing -> new GreetingsCountModel(name, existing.count + 1, Instant.now())
             )
             .orElseGet(() -> new GreetingsCountModel(name, 1, Instant.now()));
         getEntityManager().merge(greeting);

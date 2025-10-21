@@ -355,14 +355,14 @@ GreetingsCountModel greeting = findById(name);
 if (greeting == null) {
     greeting = new GreetingsCountModel(name, 1, Instant.now());
 } else {
-    greeting.greetingCount++;
+    greeting.count++;
     greeting.lastGreetedAt = Instant.now();
 }
 persistAndFlush(greeting);
 
 // Functional
 GreetingsCountModel greeting = Optional.ofNullable(findById(name))
-    .map(existing -> new GreetingsCountModel(name, existing.greetingCount + 1, Instant.now()))
+    .map(existing -> new GreetingsCountModel(name, existing.count + 1, Instant.now()))
     .orElseGet(() -> new GreetingsCountModel(name, 1, Instant.now()));
 persistAndFlush(greeting);
 ```
