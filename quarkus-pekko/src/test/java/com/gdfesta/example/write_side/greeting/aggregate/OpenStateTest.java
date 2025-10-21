@@ -140,16 +140,14 @@ class OpenStateTest {
     }
 
     @Test
-    @DisplayName("Should throw IllegalStateException when UnGreet command and state has no name")
+    @DisplayName("Should return empty events when UnGreet command and state has no name (no-op)")
     void testUnGreetCommandWithNoName() {
         OpenState state = new OpenState(Optional.empty(), 2, 5);
         GreetingCommand.UnGreet command = new GreetingCommand.UnGreet(null);
 
-        IllegalStateException exception = assertThrows(
-            IllegalStateException.class,
-            () -> state.onCommand(command)
-        );
+        List<GreetingEvent> events = state.onCommand(command);
 
-        assertTrue(exception.getMessage().contains("Cannot ungreet when state has no name"));
+        // Should be a no-op - return empty list since there's nothing to ungreet
+        assertEquals(0, events.size());
     }
 }

@@ -16,10 +16,9 @@ public record OpenState(Optional<String> name, int count, int maxCount) implemen
                 yield List.of(new GreetingEvent.Greeted(greet.name()));
             }
             case GreetingCommand.UnGreet unGreet -> {
+                // If no name is set, nothing to ungreet - return empty events (no-op)
                 if (name.isEmpty()) {
-                    throw new IllegalStateException(
-                        "Cannot ungreet when state has no name"
-                    );
+                    yield List.of();
                 }
                 yield List.of(new GreetingEvent.UnGreeted(name.get()));
             }

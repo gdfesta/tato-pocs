@@ -8,10 +8,9 @@ public record CloseState(Optional<String> name, int count) implements GreetingSt
     public List<GreetingEvent> onCommand(GreetingCommand.NonGet command) {
         switch (command) {
             case GreetingCommand.UnGreet unGreet -> {
+                // If no name is set, nothing to ungreet - return empty events (no-op)
                 if (name.isEmpty()) {
-                    throw new IllegalStateException(
-                        "Cannot ungreet when state has no name"
-                    );
+                    return List.of();
                 }
                 return List.of(new GreetingEvent.UnGreeted(name.get()));
             }
