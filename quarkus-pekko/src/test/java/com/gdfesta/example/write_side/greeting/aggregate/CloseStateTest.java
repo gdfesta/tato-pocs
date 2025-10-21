@@ -35,12 +35,13 @@ class CloseStateTest {
     @DisplayName("Should return UnGreeted event when processing UnGreet command")
     void testUnGreetCommand() {
         CloseState state = new CloseState(5);
-        GreetingCommand.UnGreet command = new GreetingCommand.UnGreet(null);
+        GreetingCommand.UnGreet command = new GreetingCommand.UnGreet("John", null);
 
         List<GreetingEvent> events = state.onCommand(command);
 
         assertEquals(1, events.size());
         assertInstanceOf(GreetingEvent.UnGreeted.class, events.getFirst());
+        assertEquals("John", ((GreetingEvent.UnGreeted) events.getFirst()).name());
     }
 
     @Test
@@ -61,7 +62,7 @@ class CloseStateTest {
     @DisplayName("Should transition to OpenState when processing UnGreeted event")
     void testUnGreetedEventTransitionToOpen() {
         CloseState state = new CloseState(5);
-        GreetingEvent.UnGreeted event = new GreetingEvent.UnGreeted();
+        GreetingEvent.UnGreeted event = new GreetingEvent.UnGreeted("TestName");
 
         GreetingState newState = state.onEvent(event);
 

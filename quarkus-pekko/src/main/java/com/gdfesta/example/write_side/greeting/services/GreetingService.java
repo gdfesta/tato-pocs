@@ -37,7 +37,12 @@ public class GreetingService {
     public Uni<GreetingState> ungreet(String name) {
         var entityRef = sharding.entityRefFor(GreetingActorBehavior.ENTITY_TYPE_KEY, name);
         return Uni.createFrom()
-            .completionStage(entityRef.ask(GreetingCommand.UnGreet::new, Duration.ofSeconds(5)))
+            .completionStage(
+                entityRef.<StatusReply<GreetingState>>ask(
+                    replyTo -> new GreetingCommand.UnGreet(name, replyTo),
+                    Duration.ofSeconds(5)
+                )
+            )
             .flatMap(this::toUni);
     }
 

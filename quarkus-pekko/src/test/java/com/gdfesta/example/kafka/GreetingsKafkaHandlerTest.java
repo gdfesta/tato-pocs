@@ -111,8 +111,8 @@ class GreetingsKafkaHandlerTest {
     }
 
     @Test
-    @DisplayName("UnGreeted event should NOT publish to Kafka")
-    void testUnGreetedEventNotPublished() {
+    @DisplayName("UnGreeted event should publish to Kafka")
+    void testUnGreetedEventPublishesToKafka() {
         String name = generateUniqueName();
 
         TestKafkaConsumer.clear();
@@ -144,31 +144,83 @@ class GreetingsKafkaHandlerTest {
             )
             .count();
 
-        // DELETE (UnGreet) - should not produce Kafka message
+        // DELETE (UnGreet) - should produce Kafka message
         given().when().delete("/greetings/{name}", name).then().statusCode(200);
 
-        // Wait a bit to ensure no message is published
-        try {
-            Thread.sleep(1000);
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
+        // Wait for UnGreeted message to be published
+        await()
+            .atMost(10, TimeUnit.SECONDS)
+            .pollInterval(100, TimeUnit.MILLISECONDS)
+            .untilAsserted(() -> {
+                List<GreetingKafkaMessage> messages = TestKafkaConsumer.getMessages();
+
+                // Should have one more message than after greeting
+                assertTrue(
+                    messages.size() > messagesAfterGreeting,
+                    "UnGreeted event should produce Kafka message"
+                );
+
+                // Verify that an UnGreeted message exists
+                boolean foundUnGreeted = messages
+                    .stream()
+                    .anyMatch(msg -> msg instanceof GreetingKafkaMessage.UnGreeted);
+                assertTrue(foundUnGreeted, "Kafka should contain an UnGreeted message");
+            });
+    }
+
+    @Test
+    @DisplayName("Multiple UnGreeted events should publish multiple Kafka messages")
+    void testMultipleUnGreetedEventsPublishMultipleMessages() {
+        String name = generateUniqueName();
+
+        TestKafkaConsumer.clear();
+
+        // Greet 3 times to build up count
+        for (int i = 0; i < 3; i++) {
+            given().when().post("/greetings/{name}", name).then().statusCode(200);
         }
 
-        // Count should not increase (UnGreeted events are not published to Kafka)
-        long messagesAfterUnGreeting = TestKafkaConsumer.getMessages()
-            .stream()
-            .filter(
-                msg ->
-                    msg instanceof GreetingKafkaMessage.Greeted(String name1) &&
-                    name1.equals(name)
-            )
-            .count();
+        // Wait for 3 greeting messages
+        await()
+            .atMost(10, TimeUnit.SECONDS)
+            .until(
+                () ->
+                    TestKafkaConsumer.getMessages()
+                        .stream()
+                        .filter(msg -> msg instanceof GreetingKafkaMessage.Greeted)
+                        .count() >=
+                    3
+            );
 
-        assertEquals(
-            messagesAfterGreeting,
-            messagesAfterUnGreeting,
-            "UnGreeted event should not produce Kafka messages"
-        );
+        int messagesAfterGreetings = TestKafkaConsumer.getMessages().size();
+
+        // UnGreet 2 times
+        given().when().delete("/greetings/{name}", name).then().statusCode(200);
+        given().when().delete("/greetings/{name}", name).then().statusCode(200);
+
+        // Wait for 2 UnGreeted messages
+        await()
+            .atMost(10, TimeUnit.SECONDS)
+            .pollInterval(100, TimeUnit.MILLISECONDS)
+            .untilAsserted(() -> {
+                List<GreetingKafkaMessage> messages = TestKafkaConsumer.getMessages();
+
+                // Should have 2 more messages than after greetings
+                assertTrue(
+                    messages.size() >= messagesAfterGreetings + 2,
+                    "Should have published 2 UnGreeted messages"
+                );
+
+                // Count UnGreeted messages
+                long unGreetedCount = messages
+                    .stream()
+                    .filter(msg -> msg instanceof GreetingKafkaMessage.UnGreeted)
+                    .count();
+                assertTrue(
+                    unGreetedCount >= 2,
+                    "Should have at least 2 UnGreeted messages, found " + unGreetedCount
+                );
+            });
     }
 
     @Test
