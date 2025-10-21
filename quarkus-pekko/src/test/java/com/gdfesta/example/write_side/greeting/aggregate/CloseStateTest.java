@@ -69,11 +69,11 @@ class CloseStateTest {
         GreetingState newState = state.onEvent(event);
 
         assertInstanceOf(OpenState.class, newState);
-        assertEquals(Optional.of("TestName"), newState.name());
+        OpenState openState = (OpenState) newState;
+        assertEquals(Optional.of("TestName"), openState.name());
         assertEquals(4, newState.count());
 
         // Verify it's OpenState with correct maxCount
-        OpenState openState = (OpenState) newState;
         assertEquals(5, openState.maxCount());
     }
 

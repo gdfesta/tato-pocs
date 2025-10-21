@@ -2,7 +2,6 @@ package com.gdfesta.example.write_side.greeting.aggregate;
 
 import java.util.Collections;
 import java.util.List;
-import java.util.Optional;
 import java.util.Set;
 import org.apache.pekko.actor.typed.Behavior;
 import org.apache.pekko.cluster.sharding.typed.javadsl.EntityContext;
@@ -42,7 +41,7 @@ public class GreetingActorBehavior
 
     @Override
     public GreetingState emptyState() {
-        return new OpenState(Optional.empty(), 0, 5);
+        return new NoState(5);
     }
 
     @Override

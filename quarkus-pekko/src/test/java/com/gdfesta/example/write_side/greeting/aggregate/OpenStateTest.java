@@ -55,13 +55,13 @@ class OpenStateTest {
         GreetingState newState = state.onEvent(event);
 
         assertInstanceOf(OpenState.class, newState);
-        assertEquals(Optional.of("Alice"), newState.name());
+        assertEquals(Optional.of("Alice"), ((OpenState) newState).name());
         assertEquals(1, newState.count());
 
         // Test another increment
         GreetingState nextState = newState.onEvent(event);
         assertInstanceOf(OpenState.class, nextState);
-        assertEquals(Optional.of("Alice"), nextState.name());
+        assertEquals(Optional.of("Alice"), ((OpenState) nextState).name());
         assertEquals(2, nextState.count());
     }
 
@@ -74,7 +74,7 @@ class OpenStateTest {
         GreetingState newState = state.onEvent(event);
 
         assertInstanceOf(CloseState.class, newState);
-        assertEquals(Optional.of("Bob"), newState.name());
+        assertEquals(Optional.of("Bob"), ((CloseState) newState).name());
         assertEquals(5, newState.count());
     }
 
@@ -87,13 +87,13 @@ class OpenStateTest {
         GreetingState newState = state.onEvent(event);
 
         assertInstanceOf(OpenState.class, newState);
-        assertEquals(Optional.of("TestName"), newState.name());
+        assertEquals(Optional.of("TestName"), ((OpenState) newState).name());
         assertEquals(2, newState.count());
 
         // Test another decrement
         GreetingState nextState = newState.onEvent(event);
         assertInstanceOf(OpenState.class, nextState);
-        assertEquals(Optional.of("TestName"), nextState.name());
+        assertEquals(Optional.of("TestName"), ((OpenState) nextState).name());
         assertEquals(1, nextState.count());
     }
 
@@ -106,7 +106,7 @@ class OpenStateTest {
         GreetingState newState = state.onEvent(event);
 
         assertInstanceOf(OpenState.class, newState);
-        assertEquals(Optional.of("TestName"), newState.name());
+        assertEquals(Optional.of("TestName"), ((OpenState) newState).name());
         assertEquals(0, newState.count());
     }
 
