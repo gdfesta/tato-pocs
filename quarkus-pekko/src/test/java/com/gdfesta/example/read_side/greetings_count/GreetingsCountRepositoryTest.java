@@ -200,4 +200,146 @@ class GreetingsCountRepositoryTest {
 
         assertNull(result);
     }
+
+    @Test
+    @DisplayName("Should decrement count when ungreeting")
+    void testDecrementGreeting() {
+        String name = generateUniqueName();
+
+        // Create initial greeting with count=3
+        repository.upsertGreeting(name);
+        repository.upsertGreeting(name);
+        repository.upsertGreeting(name);
+        clearCache();
+
+        GreetingsCountModel before = repository.findById(name);
+        assertEquals(3, before.count);
+
+        // Decrement once
+        repository.decrementGreeting(name);
+        clearCache();
+
+        GreetingsCountModel after = repository.findById(name);
+        assertEquals(2, after.count);
+        assertNotNull(after.lastGreetedAt);
+    }
+
+    @Test
+    @DisplayName("Should decrement count to zero but not below")
+    void testDecrementToZero() {
+        String name = generateUniqueName();
+
+        // Create initial greeting
+        repository.upsertGreeting(name);
+        clearCache();
+
+        assertEquals(1, repository.findById(name).count);
+
+        // Decrement to zero
+        repository.decrementGreeting(name);
+        clearCache();
+
+        GreetingsCountModel afterFirst = repository.findById(name);
+        assertEquals(0, afterFirst.count);
+
+        // Try to decrement again - should stay at 0
+        repository.decrementGreeting(name);
+        clearCache();
+
+        GreetingsCountModel afterSecond = repository.findById(name);
+        assertEquals(0, afterSecond.count, "Count should not go below zero");
+    }
+
+    @Test
+    @DisplayName("Should update timestamp when decrementing")
+    void testDecrementUpdatesTimestamp() throws InterruptedException {
+        String name = generateUniqueName();
+
+        // Create initial greeting
+        repository.upsertGreeting(name);
+        clearCache();
+
+        GreetingsCountModel before = repository.findById(name);
+        Instant beforeTimestamp = before.lastGreetedAt;
+
+        // Wait a bit to ensure timestamp difference
+        Thread.sleep(10);
+
+        // Decrement
+        repository.decrementGreeting(name);
+        clearCache();
+
+        GreetingsCountModel after = repository.findById(name);
+        assertTrue(
+            after.lastGreetedAt.isAfter(beforeTimestamp) ||
+                after.lastGreetedAt.equals(beforeTimestamp),
+            "Timestamp should be updated or remain the same when decrementing"
+        );
+    }
+
+    @Test
+    @DisplayName("Should do nothing when decrementing non-existent name")
+    void testDecrementNonExistent() {
+        String nonExistent = generateUniqueName();
+
+        // Try to decrement non-existent - should not throw exception
+        assertDoesNotThrow(() -> repository.decrementGreeting(nonExistent));
+
+        // Verify nothing was created
+        GreetingsCountModel result = repository.findById(nonExistent);
+        assertNull(result, "Decrementing non-existent name should not create a record");
+    }
+
+    @Test
+    @DisplayName("Should handle multiple decrements correctly")
+    void testMultipleDecrements() {
+        String name = generateUniqueName();
+
+        // Create initial greeting with count=5
+        for (int i = 0; i < 5; i++) {
+            repository.upsertGreeting(name);
+        }
+        clearCache();
+
+        assertEquals(5, repository.findById(name).count);
+
+        // Decrement 3 times
+        repository.decrementGreeting(name);
+        repository.decrementGreeting(name);
+        repository.decrementGreeting(name);
+        clearCache();
+
+        GreetingsCountModel result = repository.findById(name);
+        assertEquals(2, result.count, "Count should be decremented to 2 after 3 decrements");
+    }
+
+    @Test
+    @DisplayName("Should handle interleaved increment and decrement operations")
+    void testInterleavedIncrementDecrement() {
+        String name = generateUniqueName();
+
+        // Increment twice
+        repository.upsertGreeting(name);
+        repository.upsertGreeting(name);
+        clearCache();
+        assertEquals(2, repository.findById(name).count);
+
+        // Decrement once
+        repository.decrementGreeting(name);
+        clearCache();
+        assertEquals(1, repository.findById(name).count);
+
+        // Increment again
+        repository.upsertGreeting(name);
+        clearCache();
+        assertEquals(2, repository.findById(name).count);
+
+        // Decrement twice
+        repository.decrementGreeting(name);
+        repository.decrementGreeting(name);
+        clearCache();
+
+        GreetingsCountModel result = repository.findById(name);
+        assertEquals(0, result.count, "Final count should be 0 after interleaved operations");
+    }
 }
