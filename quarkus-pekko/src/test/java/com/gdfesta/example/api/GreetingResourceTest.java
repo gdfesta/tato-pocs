@@ -204,22 +204,22 @@ public class GreetingResourceTest {
     void testUngreetAtZero() {
         String name = generateUniqueName();
 
-        // Start with OpenState(0, 5)
+        // Start with NoState(5) - initial empty state
         given()
             .when()
             .get("/greetings/{name}", name)
             .then()
             .statusCode(200)
-            .body("status", is("OpenState"))
+            .body("status", is("NoState"))
             .body("count", is(0));
 
-        // Ungreet at zero should stay at zero
+        // Ungreet at zero should stay in NoState (no-op)
         given()
             .when()
             .delete("/greetings/{name}", name)
             .then()
             .statusCode(200)
-            .body("status", is("OpenState"))
+            .body("status", is("NoState"))
             .body("count", is(0));
     }
 
@@ -228,13 +228,13 @@ public class GreetingResourceTest {
     void testGetReturnsCurrentState() {
         String name = generateUniqueName();
 
-        // Initially should be OpenState(0)
+        // Initially should be NoState(5) - empty state
         given()
             .when()
             .get("/greetings/{name}", name)
             .then()
             .statusCode(200)
-            .body("status", is("OpenState"))
+            .body("status", is("NoState"))
             .body("count", is(0));
 
         // Greet twice
@@ -252,17 +252,17 @@ public class GreetingResourceTest {
     }
 
     @Test
-    @DisplayName("GET /greetings/{name} - Non-existent entity returns OpenState(0)")
+    @DisplayName("GET /greetings/{name} - Non-existent entity returns NoState(0)")
     void testGetNonExistentEntity() {
         String name = generateUniqueName();
 
-        // Getting a name that was never greeted should return initial state
+        // Getting a name that was never greeted should return initial NoState
         given()
             .when()
             .get("/greetings/{name}", name)
             .then()
             .statusCode(200)
-            .body("status", is("OpenState"))
+            .body("status", is("NoState"))
             .body("count", is(0));
     }
 
