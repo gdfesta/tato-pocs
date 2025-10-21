@@ -1,9 +1,11 @@
-name: PR Verification
+name: Quarkus-Pekko PR Verification
 
 on:
   pull_request:
     branches:
       - '**'
+    paths:
+      - 'quarkus-pekko/**'
 
 jobs:
   verify:
@@ -21,4 +23,5 @@ jobs:
           cache: 'maven'
 
       - name: Run Maven verify
+        working-directory: quarkus-pekko
         run: ./mvnw verify
