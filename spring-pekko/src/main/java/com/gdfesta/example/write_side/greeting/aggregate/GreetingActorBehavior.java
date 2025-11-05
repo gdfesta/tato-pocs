@@ -7,14 +7,15 @@ import org.apache.pekko.actor.typed.Behavior;
 import org.apache.pekko.cluster.sharding.typed.javadsl.EntityContext;
 import org.apache.pekko.cluster.sharding.typed.javadsl.EntityTypeKey;
 import org.apache.pekko.pattern.StatusReply;
-import org.apache.pekko.persistence.typed.PersistenceId;
+import org.apache.pekko.persistence.typed.ReplicationId;
 import org.apache.pekko.persistence.typed.javadsl.CommandHandler;
 import org.apache.pekko.persistence.typed.javadsl.EventHandler;
-import org.apache.pekko.persistence.typed.javadsl.EventSourcedBehavior;
+import org.apache.pekko.persistence.typed.javadsl.ReplicatedEventSourcedBehavior;
+import org.apache.pekko.persistence.typed.javadsl.ReplicationContext;
 import org.apache.pekko.persistence.typed.javadsl.RetentionCriteria;
 
 public class GreetingActorBehavior
-    extends EventSourcedBehavior<GreetingCommand, GreetingEvent, GreetingState> {
+    extends ReplicatedEventSourcedBehavior<GreetingCommand, GreetingEvent, GreetingState> {
 
     public static final EntityTypeKey<GreetingCommand> ENTITY_TYPE_KEY = EntityTypeKey.create(
         GreetingCommand.class,
@@ -29,14 +30,12 @@ public class GreetingActorBehavior
         "greeting-4"
     );
 
-    public static Behavior<GreetingCommand> create(EntityContext<GreetingCommand> entityContext) {
-        return new GreetingActorBehavior(
-            PersistenceId.of(entityContext.getEntityTypeKey().name(), entityContext.getEntityId())
-        );
+    public static Behavior<GreetingCommand> create(ReplicationContext replicationContext) {
+        return new GreetingActorBehavior(replicationContext);
     }
 
-    private GreetingActorBehavior(PersistenceId persistenceId) {
-        super(persistenceId);
+    public GreetingActorBehavior(ReplicationContext replicationContext) {
+        super(replicationContext);
     }
 
     @Override

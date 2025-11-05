@@ -200,6 +200,44 @@ public class EntityActorBehavior extends EventSourcedBehavior<Command, Event, St
 }
 ```
 
+**Replicated Event-Sourced Actors** (for multi-region deployment):
+```java
+public class EntityActorBehavior extends ReplicatedEventSourcedBehavior<Command, Event, State> {
+    // 1. Define entity type key for cluster sharding
+    public static final EntityTypeKey<Command> ENTITY_TYPE_KEY =
+        EntityTypeKey.create(Command.class, "entity-aggregate");
+
+    // 2. Factory method for entity creation with ReplicationContext
+    public static Behavior<Command> create(ReplicationContext replicationContext) {
+        return new EntityActorBehavior(replicationContext);
+    }
+
+    // 3. Constructor accepts ReplicationContext instead of PersistenceId
+    private EntityActorBehavior(ReplicationContext replicationContext) {
+        super(replicationContext);
+    }
+
+    // 4. Command and event handlers remain the same
+    @Override
+    public CommandHandler<Command, Event, State> commandHandler() {
+        return newCommandHandlerBuilder()
+            .forAnyState()
+            .onCommand(Command.class, (state, cmd) -> {
+                var events = state.onCommand(cmd);
+                return Effect().persist(events).thenRun(...);
+            })
+            .build();
+    }
+
+    @Override
+    public EventHandler<State, Event> eventHandler() {
+        return newEventHandlerBuilder()
+            .forAnyState()
+            .onAnyEvent((state, event) -> state.onEvent(event));
+    }
+}
+```
+
 **Service Layer** (encapsulates actor communication):
 ```java
 @Service
@@ -511,6 +549,103 @@ psql -h localhost -p 5432 -U spring-pekko -d spring-pekko
 - Persistence configuration
 - Serialization bindings
 - Management HTTP settings
+- Replicated Event Sourcing settings (for multi-region)
+
+### Multi-Region Deployment with Replicated Event Sourcing
+
+The project uses **Replicated Event Sourcing** for multi-region deployment, enabling active-active writes across regions with eventual consistency.
+
+**Key Concepts**:
+- Each region runs an independent cluster with its own database
+- Events are replicated between regions automatically
+- Same entity can be active in multiple regions simultaneously
+- Writes are local (low latency), replication is asynchronous
+- Automatic conflict resolution
+
+**Configuration**:
+
+1. **Set replica ID per region** (via environment variable):
+   ```bash
+   # Region 1
+   export PEKKO_REPLICA_ID=region-1
+
+   # Region 2
+   export PEKKO_REPLICA_ID=region-2
+
+   # Region 3
+   export PEKKO_REPLICA_ID=region-3
+   ```
+
+2. **Configure replication endpoints**:
+   ```bash
+   # For Region 1 to connect to Region 2 and 3
+   export PEKKO_REGION_2_HOST=region-2.example.com
+   export PEKKO_REGION_2_PORT=8558
+   export PEKKO_REGION_3_HOST=region-3.example.com
+   export PEKKO_REGION_3_PORT=8558
+   ```
+
+3. **In Kubernetes**, use service names:
+   ```yaml
+   env:
+     - name: PEKKO_REPLICA_ID
+       value: "region-1"
+     - name: PEKKO_REGION_1_HOST
+       value: "spring-pekko-replication.region-1.svc.cluster.local"
+     - name: PEKKO_REGION_2_HOST
+       value: "spring-pekko-replication.region-2.svc.cluster.local"
+     - name: PEKKO_REGION_3_HOST
+       value: "spring-pekko-replication.region-3.svc.cluster.local"
+   ```
+
+**Initialization** (in `ShardsCreator.java`):
+```java
+@Component
+public class ShardsCreator {
+    private final ClusterSharding sharding;
+    private final String replicaId;
+
+    public ShardsCreator(
+        ClusterSharding sharding,
+        @Value("${pekko.replicated-event-sourcing.replica-id}") String replicaId
+    ) {
+        this.sharding = sharding;
+        this.replicaId = replicaId;
+    }
+
+    @EventListener(ApplicationReadyEvent.class)
+    public void onApplicationReady() {
+        // Define all replicas
+        Set<ReplicaId> allReplicaIds = Set.of(
+            new ReplicaId("region-1"),
+            new ReplicaId("region-2"),
+            new ReplicaId("region-3")
+        );
+
+        // Initialize replicated entity
+        ReplicatedEntity<Command, ?> replicatedEntity = ReplicatedEntity.create(
+            EntityActorBehavior.ENTITY_TYPE_KEY,
+            allReplicaIds,
+            EntityActorBehavior::create
+        ).withDirectReplication(true);
+
+        sharding.init(ReplicatedEntityProvider.create(
+            replicatedEntity,
+            new ReplicaId(replicaId)
+        ));
+    }
+}
+```
+
+**Network Requirements**:
+- Each region needs bidirectional connectivity on the replication port (default: 8558)
+- Use VPN/VPC peering for secure inter-region communication
+- Firewall rules must allow gRPC traffic between regions
+
+**Monitoring**:
+- Check replication lag via Pekko Management HTTP endpoints
+- Monitor event journal size in each region's database
+- Track replication errors in application logs
 
 ## Docker Compose Dev Services
 

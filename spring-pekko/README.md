@@ -319,6 +319,71 @@ sharding.init(Entity.of(
 ));
 ```
 
+### Replicated Event Sourcing (Multi-Region Deployment)
+
+The project supports **Replicated Event Sourcing** for active-active multi-region deployments with automatic event replication and conflict resolution.
+
+#### How It Works
+
+When initializing replicated sharding in `ShardsCreator.java`, two key parameters enable cross-region replication:
+
+**1. All Replica IDs** (`allReplicaIds`):
+
+Defines all replicas (regions) that exist in the distributed system:
+
+```java
+Set<ReplicaId> allReplicaIds = Set.of(
+    new ReplicaId("region-1"),
+    new ReplicaId("region-2"),
+    new ReplicaId("region-3")
+);
+```
+
+This tells Pekko about every region in the system so it can:
+- Replicate events between all regions automatically
+- Detect conflicts when the same entity is modified in multiple regions
+- Apply automatic conflict resolution strategies
+
+**2. Journal Configuration Map** (`ReplicaId → "jdbc-read-journal"`):
+
+Maps each replica to its read journal configuration:
+
+```java
+allReplicaIds.stream()
+    .collect(
+        java.util.stream.Collectors.toMap(
+            r -> r,                    // Key: ReplicaId (e.g., region-1)
+            r -> "jdbc-read-journal"   // Value: journal config name
+        )
+    )
+```
+
+This mapping specifies **how to read events from each replica** for replication. The `"jdbc-read-journal"` value references the Pekko configuration in `application.conf` that defines the PostgreSQL connection settings.
+
+#### Multi-Region Architecture
+
+```
+┌──────────────┐         ┌──────────────┐         ┌──────────────┐
+│   Region-1   │         │   Region-2   │         │   Region-3   │
+│              │◄───────►│              │◄───────►│              │
+│ PostgreSQL   │  Async  │ PostgreSQL   │  Async  │ PostgreSQL   │
+│  (local DB)  │  Replic │  (local DB)  │  Replic │  (local DB)  │
+└──────────────┘         └──────────────┘         └──────────────┘
+```
+
+When an event is persisted in Region-1:
+1. Saved locally to Region-1's PostgreSQL database (low latency)
+2. Pekko reads the event using the configured `jdbc-read-journal`
+3. Automatically replicates it to Region-2 and Region-3 asynchronously
+
+**Key Benefits**:
+- **Low-latency writes**: All writes are local to the region
+- **High availability**: Same entity can be active in multiple regions
+- **Automatic replication**: Events sync between regions transparently
+- **Conflict resolution**: Built-in strategies for concurrent modifications
+
+For detailed configuration and deployment instructions, see the Multi-Region Deployment section in [AGENTS.MD](./AGENTS.MD).
+
 ## Spring Boot vs Quarkus Differences
 
 This project is a port of the `quarkus-pekko` project to Spring Boot. Key differences:
